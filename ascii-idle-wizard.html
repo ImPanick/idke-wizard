@@ -3786,36 +3786,63 @@ function renderGear(){
     });
   }
 
-  // Gems
+  // Gems — collapsible per-type groups, mirrors Spellbook/Elements pattern.
+  // Iterate GEM_TYPES (not the inventory) so group order is stable across
+  // renders even as counts change. Onyx (power) has no element, so it uses
+  // arcane styling + an "All Elements" label.
   const gemEntries=Object.entries(G.gemInventory).filter(([,c])=>c>0);
-  $('gem-summary').textContent=`${gemEntries.reduce((a,[,c])=>a+c,0)} gems`;
-  if(gemEntries.length===0){
+  const totalGems=gemEntries.reduce((a,[,c])=>a+c,0);
+  $('gem-summary').textContent=`${totalGems} gem${totalGems===1?'':'s'}`;
+  const byType={};
+  for(const [id,count] of gemEntries){
+    const m=id.match(/gem_(\w+)_(\d+)/);if(!m)continue;
+    const t=m[1],lvl=parseInt(m[2]);
+    if(!byType[t])byType[t]=[];
+    byType[t].push({lvl,count});
+  }
+  if(totalGems===0){
     $('gem-list').innerHTML=`<div class="sub">No gems. Find them in chests.</div>`;
   } else {
     let gh='';
-    // Group by type then list levels
-    const byType={};
-    for(const [id,count] of gemEntries){
-      const m=id.match(/gem_(\w+)_(\d+)/);if(!m)continue;
-      const t=m[1],lvl=parseInt(m[2]);
-      if(!byType[t])byType[t]=[];
-      byType[t].push({lvl,count});
-    }
-    for(const t in byType){
-      const tg=GEM_TYPES.find(g=>g.id===t);
-      gh+=`<div class="forge-group">
-        <div>
-          <div><span class="gem-pill ${tg.color}">${tg.name}</span><span class="sub">${tg.effect}</span></div>
-          <div class="det">${byType[t].sort((a,b)=>a.lvl-b.lvl).map(g=>`L${g.lvl}×${g.count}`).join(' · ')}</div>
-        </div>
-        <div>${byType[t].filter(g=>g.lvl<5&&g.count>=2).map(g=>{
-          const cost={gold:Math.floor(200*Math.pow(3,g.lvl)),dust:Math.floor(40*Math.pow(2,g.lvl))};
-          const can=canPay(cost);
-          return `<button class="act" data-comb-t="${t}" data-comb-l="${g.lvl}" ${can?'':'disabled'} title="${fmtG(cost.gold)}, ${cost.dust} dust">Combine L${g.lvl}→L${g.lvl+1}</button>`;
-        }).join('')}</div>
-      </div>`;
+    for(const tg of GEM_TYPES){
+      const list=byType[tg.id];
+      if(!list||list.length===0)continue;
+      list.sort((a,b)=>a.lvl-b.lvl);
+      const total=list.reduce((s,g)=>s+g.count,0);
+      const highest=list.reduce((m,g)=>Math.max(m,g.lvl),0);
+      const key='gems:'+tg.id;
+      const collapsed=G.uiCollapsed[key]!==false; // default collapsed
+      const elClass=tg.el||'arcane';
+      const elGlyph=tg.el?EL_INFO[tg.el].glyph:'❉';
+      const elLabel=tg.el?EL_INFO[tg.el].name:'All Elements';
+      gh+=`<div class="el-group">
+        <div class="el-group-header" data-toggle-gems="${tg.id}">
+          <span class="el ${elClass}">${elGlyph} ${elLabel}</span>
+          <span class="gem-pill ${tg.color}">${tg.name}</span>
+          <span class="count">${total} · max L${highest} · ${tg.effect}</span>
+          <span class="toggle">${collapsed?'+':'−'}</span>
+        </div>`;
+      if(!collapsed){
+        const combines=list.filter(g=>g.lvl<5&&g.count>=2);
+        gh+=`<div class="el-group-body">
+          <div class="det" style="margin-bottom:4px">${list.map(g=>`L${g.lvl}×${g.count}`).join(' · ')}</div>
+          <div class="row">${combines.map(g=>{
+            const cost={gold:Math.floor(200*Math.pow(3,g.lvl)),dust:Math.floor(40*Math.pow(2,g.lvl))};
+            const can=canPay(cost);
+            return `<button class="act" data-comb-t="${tg.id}" data-comb-l="${g.lvl}" ${can?'':'disabled'} title="${fmtG(cost.gold)}, ${cost.dust} dust">Combine L${g.lvl}→L${g.lvl+1}</button>`;
+          }).join('')||'<span class="sub">Need 2+ of the same level (max L5) to combine.</span>'}</div>
+        </div>`;
+      }
+      gh+=`</div>`;
     }
     $('gem-list').innerHTML=gh;
+    $('gem-list').querySelectorAll('[data-toggle-gems]').forEach(h=>{
+      h.onclick=()=>{
+        const k='gems:'+h.dataset.toggleGems;
+        G.uiCollapsed[k]=G.uiCollapsed[k]===false?true:false;
+        renderGear();
+      };
+    });
     $('gem-list').querySelectorAll('button[data-comb-t]').forEach(b=>{
       b.onclick=()=>{combineGems(b.dataset.combT,parseInt(b.dataset.combL));renderGear();renderTop();};
     });
