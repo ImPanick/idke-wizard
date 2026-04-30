@@ -18,7 +18,7 @@
   --el-light:#f0d860;--el-shadow:#b095e8;--el-blood:#d8636a;--el-arcane:#e89cdb;
   --chest-c:#c8b896;--chest-r:#6cb8ec;--chest-e:#b095e8;
   --rar-common:#a4a4b8;--rar-uncommon:#86d8a0;--rar-rare:#6cb8ec;--rar-epic:#b095e8;--rar-legendary:#e8c452;
-  --mat-dust:#c8b896;--mat-crystal:#6cb8ec;--mat-gem:#b095e8;
+  --mat-dust:#c8b896;--mat-crystal:#6cb8ec;--mat-gem:#b095e8;--mat-herb:#86d8a0;
   --map-ground:#1a1a26;--map-deco:#28283a;--mob:#e8888e;
   --row-divider:#22223a;--legendary-glow:rgba(232,196,82,0.22);
   --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
@@ -33,7 +33,7 @@ body[data-theme="darkblue"]{
   --el-light:#f0d860;--el-shadow:#a890e0;--el-blood:#d8636a;--el-arcane:#e89cdb;
   --chest-c:#c8b896;--chest-r:#88d4ec;--chest-e:#a890e0;
   --rar-common:#a4b0c4;--rar-uncommon:#88d4d0;--rar-rare:#88d4ec;--rar-epic:#a890e0;--rar-legendary:#e8c452;
-  --mat-dust:#c8b896;--mat-crystal:#88d4ec;--mat-gem:#a890e0;
+  --mat-dust:#c8b896;--mat-crystal:#88d4ec;--mat-gem:#a890e0;--mat-herb:#88d4d0;
   --map-ground:#1a2230;--map-deco:#283448;--mob:#e8888e;
   --row-divider:#202c40;--legendary-glow:rgba(232,196,82,0.22);
 }
@@ -47,7 +47,7 @@ body[data-theme="darkforest"]{
   --el-light:#f0d860;--el-shadow:#b095e8;--el-blood:#d8636a;--el-arcane:#e89cdb;
   --chest-c:#c8b896;--chest-r:#6cb8ec;--chest-e:#b095e8;
   --rar-common:#a8b8a8;--rar-uncommon:#8acc92;--rar-rare:#6cb8ec;--rar-epic:#b095e8;--rar-legendary:#e8c452;
-  --mat-dust:#c8b896;--mat-crystal:#6cb8ec;--mat-gem:#b095e8;
+  --mat-dust:#c8b896;--mat-crystal:#6cb8ec;--mat-gem:#b095e8;--mat-herb:#cadc78;
   --map-ground:#1a241c;--map-deco:#283328;--mob:#e8888e;
   --row-divider:#1f2c22;--legendary-glow:rgba(232,196,82,0.22);
 }
@@ -61,7 +61,7 @@ body[data-theme="light"]{
   --el-light:#a07410;--el-shadow:#6a3acc;--el-blood:#a82424;--el-arcane:#a01a82;
   --chest-c:#5a4830;--chest-r:#1d6ea5;--chest-e:#6a3acc;
   --rar-common:#40404a;--rar-uncommon:#247838;--rar-rare:#1d6ea5;--rar-epic:#6a3acc;--rar-legendary:#a4640e;
-  --mat-dust:#5a4830;--mat-crystal:#1d6ea5;--mat-gem:#6a3acc;
+  --mat-dust:#5a4830;--mat-crystal:#1d6ea5;--mat-gem:#6a3acc;--mat-herb:#247838;
   --map-ground:#cac1a8;--map-deco:#a89878;--mob:#a82424;
   --row-divider:#d8d0b8;--legendary-glow:rgba(164,100,14,0.18);
 }
@@ -76,7 +76,7 @@ body[data-theme="lightblue"]{
   --el-light:#a07410;--el-shadow:#6a3acc;--el-blood:#a82424;--el-arcane:#a01a82;
   --chest-c:#5a4830;--chest-r:#2080b8;--chest-e:#6a3acc;
   --rar-common:#40404a;--rar-uncommon:#247852;--rar-rare:#2080b8;--rar-epic:#6a3acc;--rar-legendary:#a06410;
-  --mat-dust:#5a4830;--mat-crystal:#2080b8;--mat-gem:#6a3acc;
+  --mat-dust:#5a4830;--mat-crystal:#2080b8;--mat-gem:#6a3acc;--mat-herb:#247852;
   --map-ground:#bcc8d4;--map-deco:#94a6b8;--mob:#a82424;
   --row-divider:#d4dde6;--legendary-glow:rgba(160,100,16,0.18);
 }
@@ -91,7 +91,7 @@ body[data-theme="amber"]{
   --el-light:#d4c070;--el-shadow:#7a5028;--el-blood:#b85030;--el-arcane:#c898a0;
   --chest-c:#cc9858;--chest-r:#c89878;--chest-e:#dcb888;
   --rar-common:#7a6038;--rar-uncommon:#d4b870;--rar-rare:#c89878;--rar-epic:#dcb888;--rar-legendary:#e8c890;
-  --mat-dust:#cc9858;--mat-crystal:#c89878;--mat-gem:#dcb888;
+  --mat-dust:#cc9858;--mat-crystal:#c89878;--mat-gem:#dcb888;--mat-herb:#a8a058;
   --map-ground:#2e2412;--map-deco:#3e3018;--mob:#c85838;
   --row-divider:#3a2c1a;--legendary-glow:rgba(232,200,144,0.28);
 }
@@ -105,7 +105,7 @@ body[data-theme="contrast"]{
   --el-light:#ffe840;--el-shadow:#ee54ee;--el-blood:#ee3030;--el-arcane:#ee80c8;
   --chest-c:#f4f4f4;--chest-r:#5cc4ff;--chest-e:#ee80c8;
   --rar-common:#f4f4f4;--rar-uncommon:#5cf05c;--rar-rare:#5cc4ff;--rar-epic:#ee80c8;--rar-legendary:#ffe840;
-  --mat-dust:#f4f4f4;--mat-crystal:#5cc4ff;--mat-gem:#ee80c8;
+  --mat-dust:#f4f4f4;--mat-crystal:#5cc4ff;--mat-gem:#ee80c8;--mat-herb:#5cf05c;
   --map-ground:#444444;--map-deco:#666666;--mob:#ee5454;
   --row-divider:#444444;--legendary-glow:rgba(255,232,64,0.35);
 }
@@ -175,6 +175,48 @@ pre.map .gem{color:var(--mat-gem);font-weight:700}
 .mat-strip .m.dust .val{color:var(--mat-dust);font-weight:700}
 .mat-strip .m.crystal .val{color:var(--mat-crystal);font-weight:700}
 .mat-strip .m.gem .val{color:var(--mat-gem);font-weight:700}
+.mat-strip .m.herb .val{color:var(--mat-herb);font-weight:700}
+/* Ailment cue layer 1 — hero glyph on the map pulses red when ailing */
+pre.map .hero.ailing{color:var(--hp);text-shadow:0 0 8px var(--hp),0 0 16px var(--hp);
+                     animation:hero-ailing-pulse 0.8s ease-in-out infinite alternate}
+@keyframes hero-ailing-pulse{
+  from{text-shadow:0 0 4px var(--hp);filter:brightness(1.0)}
+  to  {text-shadow:0 0 14px var(--hp);filter:brightness(1.4)}
+}
+/* Ailment cue layer 2 — hero panel border glows red when ailing */
+.panel.hero-panel.ailing{border-color:var(--hp);
+                         box-shadow:0 0 0 1px var(--hp),0 0 14px rgba(216,99,106,0.45);
+                         animation:panel-ailing-pulse 1.2s ease-in-out infinite alternate}
+@keyframes panel-ailing-pulse{
+  from{box-shadow:0 0 0 1px var(--hp),0 0 8px rgba(216,99,106,0.30)}
+  to  {box-shadow:0 0 0 1px var(--hp),0 0 18px rgba(216,99,106,0.65)}
+}
+/* Ailment cue layer 3 — buff strip pills for ailments */
+.buff-strip .ailment{color:var(--hp);border-color:var(--hp);
+                     background:rgba(216,99,106,0.10);
+                     animation:ailment-blink 1.6s ease-in-out infinite alternate}
+@keyframes ailment-blink{
+  from{background:rgba(216,99,106,0.06)}
+  to  {background:rgba(216,99,106,0.18)}
+}
+/* Alchemy panel — quality row + brew slot styling */
+.q-row{display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;
+       padding:2px 4px;border-top:1px dotted var(--row-divider);font-size:11px}
+.q-row:first-child{border-top:none}
+.q-row .q-label{color:var(--dim);min-width:80px}
+.q-row .q-perfect .q-label{color:var(--gold);font-weight:700}
+.q-row .q-count{color:var(--fg);font-weight:600}
+.brew-slot{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;
+           padding:6px 8px;border:1px solid var(--border);background:var(--bg);margin-bottom:4px}
+.brew-slot.empty{opacity:0.55;border-style:dashed}
+.brew-slot .nm{color:var(--hi);font-weight:600}
+.brew-slot .det{color:var(--dim);font-size:11px}
+.alchemy-skill{padding:6px 8px;background:var(--panel2);border:1px solid var(--border);
+               margin-bottom:6px;display:flex;flex-direction:column;gap:4px}
+.alchemy-skill .row1{display:flex;justify-content:space-between;align-items:baseline}
+.alchemy-skill .lvl{color:var(--hi);font-weight:700;font-size:13px}
+.alchemy-skill .stats{color:var(--dim);font-size:11px}
+.alchemy-skill .bar.maxed>span{background:var(--gold)}
 .bar{position:relative;height:14px;background:var(--hpbg);border:1px solid var(--border);margin:2px 0}
 .bar>span{position:absolute;inset:0;display:block;width:0%;background:var(--hp);transition:width .12s linear}
 .bar.xpbar{background:var(--xpbg)}.bar.xpbar>span{background:var(--xp)}
@@ -402,6 +444,7 @@ pre.map .trialBoss{color:var(--gold);font-weight:700}
     <button class="tab-btn" data-tab="ritual">Ritual</button>
     <button class="tab-btn" data-tab="crusade">Crusade</button>
     <button class="tab-btn" data-tab="trials">Trials</button>
+    <button class="tab-btn" data-tab="alchemy">Alchemy</button>
     <button class="tab-btn" data-tab="awaken">Awakening</button>
   </div>
 
@@ -417,7 +460,7 @@ pre.map .trialBoss{color:var(--gold);font-weight:700}
           <span class="controls-hint"><kbd>WASD</kbd>/<kbd>Arrows</kbd></span>
         </div>
       </div>
-      <div class="panel">
+      <div class="panel hero-panel" id="hero-panel">
         <h2>Wizard</h2>
         <div class="bar"><span id="hp-fill"></span><div class="txt" id="hp-txt">HP 0/0</div></div>
         <div class="bar manabar"><span id="mana-fill"></span><div class="txt" id="mana-txt">Mana 0/0</div></div>
@@ -530,6 +573,18 @@ pre.map .trialBoss{color:var(--gold);font-weight:700}
       <div class="panel">
         <h2>Essence Shop <span class="sub">persistent across Awakening</span></h2>
         <ul class="shop" id="trial-upgrades"></ul>
+      </div>
+    </div>
+    <div class="tab-pane" id="pane-alchemy">
+      <div class="panel">
+        <h2>Alchemy <span class="sub" id="alchemy-lock"></span></h2>
+        <div id="alchemy-skill-bar"></div>
+        <div id="brewing-status"></div>
+        <div id="alchemy-recipes"></div>
+      </div>
+      <div class="panel">
+        <h2>Potion Cabinet <span class="sub" id="potion-summary"></span></h2>
+        <div id="potion-inventory"></div>
       </div>
     </div>
     <div class="tab-pane" id="pane-awaken">
@@ -1318,6 +1373,7 @@ const GOLEM_TYPES=[
   {id:'dust',name:'Dust Golem',yields:'dust',rate:0.5,baseCost:300,costMul:1.50,max:30,zoneReq:0,desc:'Sifts arcane dust.'},
   {id:'crystal',name:'Crystal Golem',yields:'crystal',rate:0.10,baseCost:3500,costMul:1.60,max:25,zoneReq:2,desc:'Mines mana crystals.'},
   {id:'gem',name:'Gem Golem',yields:'gem',rate:0.020,baseCost:35000,costMul:1.70,max:20,zoneReq:4,desc:'Polishes mystic gems.'},
+  {id:'herb',name:'Herb Golem',yields:'herb',rate:0.04,baseCost:2000,costMul:1.55,max:25,zoneReq:1,desc:'Tends an arcane herbarium.'},
 ];
 function golemCost(g,lv){return Math.floor(g.baseCost*Math.pow(g.costMul,lv));}
 
@@ -1416,12 +1472,178 @@ const RITUAL_EL_FORK=0.30;
 const RITUAL_ZONE_SCALE=0.8;
 
 // ============================================================
+// ALCHEMY — ailments, recipes, skill curve
+// ============================================================
+const ALCHEMY_LVL_CAP=100;
+// Ailments inflicted on the hero by enemies whose element matches.
+// kind:'dot' applies dps over remaining duration; kind:'stat' applies a
+// negative additive shift in recomputeStats; kind:'mixed' does both.
+const AILMENT_TYPES={
+  burn:       {name:'Burn',       glyph:'≋', element:'fire',   kind:'dot',   baseDps:2.0, baseDur:5},
+  frost:      {name:'Frost',      glyph:'❄', element:'water',  kind:'stat',  statMod:{spd:-0.20,crit:-0.05}, baseDur:6},
+  weaken:     {name:'Weaken',     glyph:'▼', element:'earth',  kind:'stat',  statMod:{atk:-6}, baseDur:6},
+  frailty:    {name:'Frailty',    glyph:'✖', element:'air',    kind:'stat',  statMod:{def:-8}, baseDur:6},
+  blind:      {name:'Blind',      glyph:'◌', element:'light',  kind:'stat',  statMod:{crit:-0.10}, baseDur:5},
+  curse:      {name:'Curse',      glyph:'☠', element:'shadow', kind:'mixed', baseDps:1.5, statMod:{dmgMul:-0.20}, baseDur:6},
+  hemorrhage: {name:'Hemorrhage', glyph:'♦', element:'blood',  kind:'dot',   baseDps:3.5, baseDur:5},
+  void:       {name:'Void',       glyph:'❉', element:'arcane', kind:'stat',  statMod:{manaRegen:-3}, baseDur:6},
+};
+// Reverse map: element → ailment id for fast lookup in applyAilment.
+const ELEMENT_TO_AILMENT={};
+for(const [aid,a] of Object.entries(AILMENT_TYPES))ELEMENT_TO_AILMENT[a.element]=aid;
+
+// Potion recipes — categories: heal, buff, immunity, cure, booster.
+// brewTime in seconds; 0 = instant. Quality scaling lives at consume time
+// (effect.amount and duration are multiplied by quality).
+// Cost shape mirrors LEGENDARY_RECIPES — only listed materials are charged.
+const POTION_RECIPES=[
+  // --- Restorative -----------------------------------------------------
+  {id:'p_heal_l',  name:'Lesser Heal',     category:'restorative', tier:0, brewTime:0,
+   cost:{gold:30, dust:10, herb:3},
+   effect:{kind:'heal', amount:50},
+   desc:'Restore 50 HP. Quality scales the heal.', glyph:'+'},
+  {id:'p_heal_g',  name:'Greater Heal',    category:'restorative', tier:1, brewTime:30,
+   cost:{gold:300, dust:80, crystal:8, herb:20},
+   effect:{kind:'heal', amount:250},
+   desc:'Restore 250 HP. Quality scales the heal.', glyph:'+'},
+  {id:'p_mana_l',  name:'Mana Flask',      category:'restorative', tier:0, brewTime:0,
+   cost:{gold:25, dust:8, herb:4},
+   effect:{kind:'mana', amount:50},
+   desc:'Restore 50 mana. Quality scales the restore.', glyph:'~'},
+  {id:'p_phoenix', name:'Phoenix Drop',    category:'restorative', tier:3, brewTime:600,
+   cost:{gold:25000, dust:2000, crystal:200, gem:8, herb:300},
+   effect:{kind:'heal', amount:99999},
+   desc:'Full HP restore. Caps at maxHp regardless of quality.', glyph:'★'},
+
+  // --- Combat Buffs ----------------------------------------------------
+  {id:'p_crit',    name:'Crit Tonic',      category:'buff', tier:1, brewTime:30,
+   cost:{gold:200, dust:60, crystal:5, herb:15},
+   effect:{kind:'buff', stat:'crit', amt:0.15, dur:30},
+   desc:'+15% crit / 30s. Q scales amt + duration.', glyph:'✷'},
+  {id:'p_zerker',  name:"Berserker's Brew",category:'buff', tier:2, brewTime:120,
+   cost:{gold:1500, dust:300, crystal:30, gem:1, herb:60},
+   effect:{kind:'buff', stat:'dmgMul', amt:0.25, dur:45},
+   desc:'+25% spell damage / 45s. Q scales amt + duration.', glyph:'⚔'},
+  {id:'p_speed',   name:'Speed Vial',      category:'buff', tier:1, brewTime:30,
+   cost:{gold:180, dust:50, crystal:5, herb:15},
+   effect:{kind:'buff', stat:'spd', amt:0.30, dur:30},
+   desc:'+0.30 spd / 30s. Q scales amt + duration.', glyph:'⤳'},
+  {id:'p_aegis',   name:'Aegis Draught',   category:'buff', tier:1, brewTime:30,
+   cost:{gold:220, dust:60, crystal:6, herb:18},
+   effect:{kind:'buff', stat:'def', amt:30, dur:45},
+   desc:'+30 DEF / 45s. Q scales amt + duration.', glyph:'◈'},
+
+  // --- Immunities ------------------------------------------------------
+  {id:'p_imm_fire',   name:'Fireward Tincture', category:'immunity', tier:1, brewTime:30, element:'fire',
+   cost:{gold:250, dust:70, crystal:6, herb:20},
+   effect:{kind:'immunity', dur:60},
+   desc:'Immune to Burn (Fire) for 60s. Q scales duration.', glyph:'✦'},
+  {id:'p_imm_water',  name:'Frostward Tincture',category:'immunity', tier:1, brewTime:30, element:'water',
+   cost:{gold:250, dust:70, crystal:6, herb:20},
+   effect:{kind:'immunity', dur:60},
+   desc:'Immune to Frost (Water) for 60s. Q scales duration.', glyph:'❄'},
+  {id:'p_imm_earth',  name:'Stoneward Tincture',category:'immunity', tier:1, brewTime:30, element:'earth',
+   cost:{gold:250, dust:70, crystal:6, herb:20},
+   effect:{kind:'immunity', dur:60},
+   desc:'Immune to Weaken (Earth) for 60s. Q scales duration.', glyph:'▲'},
+  {id:'p_imm_air',    name:'Galeward Tincture', category:'immunity', tier:1, brewTime:30, element:'air',
+   cost:{gold:250, dust:70, crystal:6, herb:20},
+   effect:{kind:'immunity', dur:60},
+   desc:'Immune to Frailty (Air) for 60s. Q scales duration.', glyph:'✺'},
+  {id:'p_imm_light',  name:'Dawnward Tincture', category:'immunity', tier:1, brewTime:30, element:'light',
+   cost:{gold:250, dust:70, crystal:6, herb:20},
+   effect:{kind:'immunity', dur:60},
+   desc:'Immune to Blind (Light) for 60s. Q scales duration.', glyph:'☀'},
+  {id:'p_imm_shadow', name:'Voidshield Tincture',category:'immunity',tier:2, brewTime:120, element:'shadow',
+   cost:{gold:1200, dust:240, crystal:24, gem:1, herb:50},
+   effect:{kind:'immunity', dur:60},
+   desc:'Immune to Curse (Shadow) for 60s. Q scales duration.', glyph:'✶'},
+  {id:'p_imm_blood',  name:'Bloodward Tincture',category:'immunity', tier:2, brewTime:120, element:'blood',
+   cost:{gold:1200, dust:240, crystal:24, gem:1, herb:50},
+   effect:{kind:'immunity', dur:60},
+   desc:'Immune to Hemorrhage (Blood) for 60s. Q scales duration.', glyph:'♦'},
+  {id:'p_imm_arcane', name:'Aetherward Tincture',category:'immunity',tier:2, brewTime:120, element:'arcane',
+   cost:{gold:1500, dust:300, crystal:30, gem:2, herb:60},
+   effect:{kind:'immunity', dur:60},
+   desc:'Immune to Void (Arcane) for 60s. Q scales duration.', glyph:'❉'},
+  {id:'p_imm_all',    name:'Pure Vessel',       category:'immunity', tier:3, brewTime:600, element:'all',
+   cost:{gold:18000, dust:1500, crystal:150, gem:6, herb:250},
+   effect:{kind:'immunity', dur:30},
+   desc:'Immune to ALL ailments for 30s. Q scales duration.', glyph:'★'},
+
+  // --- Cures (clear an ailment; quality irrelevant for cures themselves)
+  {id:'p_cure_burn',       name:'Cure Burn',       category:'cure', tier:0, brewTime:0, element:'fire',
+   cost:{gold:60, dust:20, herb:8},
+   effect:{kind:'cure'}, desc:'Clear Burn ailment.', glyph:'+'},
+  {id:'p_cure_frost',      name:'Cure Frost',      category:'cure', tier:0, brewTime:0, element:'water',
+   cost:{gold:60, dust:20, herb:8},
+   effect:{kind:'cure'}, desc:'Clear Frost ailment.', glyph:'+'},
+  {id:'p_cure_weaken',     name:'Cure Weaken',     category:'cure', tier:0, brewTime:0, element:'earth',
+   cost:{gold:60, dust:20, herb:8},
+   effect:{kind:'cure'}, desc:'Clear Weaken ailment.', glyph:'+'},
+  {id:'p_cure_frailty',    name:'Cure Frailty',    category:'cure', tier:0, brewTime:0, element:'air',
+   cost:{gold:60, dust:20, herb:8},
+   effect:{kind:'cure'}, desc:'Clear Frailty ailment.', glyph:'+'},
+  {id:'p_cure_blind',      name:'Cure Blind',      category:'cure', tier:0, brewTime:0, element:'light',
+   cost:{gold:60, dust:20, herb:8},
+   effect:{kind:'cure'}, desc:'Clear Blind ailment.', glyph:'+'},
+  {id:'p_cure_curse',      name:'Cure Curse',      category:'cure', tier:1, brewTime:30, element:'shadow',
+   cost:{gold:300, dust:80, crystal:6, herb:24},
+   effect:{kind:'cure'}, desc:'Clear Curse ailment.', glyph:'+'},
+  {id:'p_cure_hemo',       name:'Cure Hemorrhage', category:'cure', tier:1, brewTime:30, element:'blood',
+   cost:{gold:300, dust:80, crystal:6, herb:24},
+   effect:{kind:'cure'}, desc:'Clear Hemorrhage ailment.', glyph:'+'},
+  {id:'p_cure_void',       name:'Cure Void',       category:'cure', tier:2, brewTime:120, element:'arcane',
+   cost:{gold:1200, dust:240, crystal:24, gem:1, herb:60},
+   effect:{kind:'cure'}, desc:'Clear Void ailment.', glyph:'+'},
+  {id:'p_cure_all',        name:'Antidote Bundle', category:'cure', tier:2, brewTime:120, element:'all',
+   cost:{gold:2000, dust:400, crystal:40, gem:2, herb:120},
+   effect:{kind:'cure'}, desc:'Clear ALL active ailments at once.', glyph:'★'},
+
+  // --- Boosters (strong, longer-lasting buffs by category) -------------
+  {id:'p_boost_gold', name:'Greedseeker',    category:'booster', tier:1, brewTime:30,
+   cost:{gold:400, dust:80, crystal:8, herb:20},
+   effect:{kind:'buff', stat:'goldFind', amt:0.50, dur:180},
+   desc:'+50% gold find / 3min. Q scales amt + duration.', glyph:'$'},
+  {id:'p_boost_drop', name:"Magpie's Eye",   category:'booster', tier:2, brewTime:120,
+   cost:{gold:1800, dust:300, crystal:30, gem:1, herb:60},
+   effect:{kind:'buff', stat:'goldFind', amt:0.30, dur:180},
+   desc:'+30% drop chance equiv (gold find) / 3min. Q scales.', glyph:'◇'},
+  {id:'p_boost_xp',   name:"Sage's Tea",     category:'booster', tier:1, brewTime:30,
+   cost:{gold:400, dust:80, crystal:8, herb:20},
+   effect:{kind:'buff', stat:'xpMul', amt:0.50, dur:180},
+   desc:'+50% xp gain / 3min. Q scales amt + duration.', glyph:'✺'},
+  {id:'p_boost_elxp', name:"Polyglot's Brew",category:'booster', tier:2, brewTime:120,
+   cost:{gold:1500, dust:280, crystal:28, gem:1, herb:55},
+   effect:{kind:'buff', stat:'elXpMul', amt:0.50, dur:180},
+   desc:'+50% element xp / 3min. Q scales amt + duration.', glyph:'❉'},
+  {id:'p_boost_war',  name:'War Elixir',     category:'booster', tier:2, brewTime:120,
+   cost:{gold:2200, dust:380, crystal:38, gem:2, herb:80},
+   effect:{kind:'buff', stat:'dmgMul', amt:0.50, dur:120},
+   desc:'+50% spell dmg / 2min. Q scales amt + duration.', glyph:'⚔'},
+  {id:'p_boost_champ',name:"Champion's Vial",category:'booster', tier:2, brewTime:120,
+   cost:{gold:2200, dust:380, crystal:38, gem:2, herb:80},
+   effect:{kind:'buff', stat:'crit', amt:0.25, dur:120},
+   desc:'+25% crit / 2min. Q scales amt + duration.', glyph:'✷'},
+  {id:'p_boost_idle', name:"Worker's Wage",  category:'booster', tier:2, brewTime:120,
+   cost:{gold:1800, dust:340, crystal:34, gem:1, herb:70},
+   effect:{kind:'buff', stat:'goldPerSec', amt:5, dur:600},
+   desc:'+5 g/s / 10min. Q scales amt + duration.', glyph:'⛏'},
+  {id:'p_boost_ritual',name:"Ritualist's Mead",category:'booster',tier:2, brewTime:120,
+   cost:{gold:2000, dust:360, crystal:36, gem:2, herb:75},
+   effect:{kind:'buff', stat:'ritualMul', amt:0.50, dur:600},
+   desc:'+50% ritual yield / 10min. Q scales amt + duration.', glyph:'⌬'},
+];
+// XP awarded on brew complete, scaled by recipe tier.
+const ALCHEMY_XP_PER_TIER=[1, 5, 25, 100];
+
+// ============================================================
 // STATE
 // ============================================================
 const G={
   gold:0, spark:0,
-  materials:{dust:0,crystal:0,gem:0},
-  hero:{lvl:1,xp:0,hp:50,maxHp:50,mana:30,maxMana:30,pos:{x:2,y:2},alive:true,respawnIn:0},
+  materials:{dust:0,crystal:0,gem:0,herb:0},
+  hero:{lvl:1,xp:0,hp:50,maxHp:50,mana:30,maxMana:30,pos:{x:2,y:2},alive:true,respawnIn:0,ailments:[]},
   zoneIdx:0, unlocked:0, kills:0, bossActive:false,
   enemy:null, mobs:[], loot:[], chests:[],
   map:null, log:[], tick:0,
@@ -1434,7 +1656,7 @@ const G={
   elementXp:{fire:0,water:0,earth:0,air:0,light:0,shadow:0,blood:0,arcane:0},
   buffs:[],
   buildings:{},
-  golems:{dust:0,crystal:0,gem:0},
+  golems:{dust:0,crystal:0,gem:0,herb:0},
   familiars:[],
   gear:{hat:null,robe:null,staff:null,ring:null,amulet:null}, // each is a gear instance object
   gearInventory:[], // array of gear instances
@@ -1447,6 +1669,7 @@ const G={
   crusade:{active:null},
   ritual:{active:false,intensity:1},
   trial:{inTrial:false,floor:1,bestFloor:0,essence:0,totalEssence:0,upgrades:{},trialReturn:null,milestonesAwarded:{}},
+  alchemy:{lvl:1,xp:0,potions:{},brewSlots:[],autoDrink:{},autoCure:{},autoBrew:null},
   theme:'dark',
   uiCollapsed:{}, // ui-only, per-element collapse state for Elements page
   uiInvSort:'rarity', // gear inventory sort mode: rarity | alpha | strength
@@ -1541,6 +1764,205 @@ const isAutoResearch=()=>G.hero.lvl>=RANKS[5].lvl;
 const isLegendaryUnlocked=()=>G.hero.lvl>=RANKS[6].lvl;
 const isRitualUnlocked=()=>G.hero.lvl>=RANKS[2].lvl;
 const isTrialUnlocked=()=>G.hero.lvl>=RANKS[3].lvl;
+const isAlchemyUnlocked=()=>G.hero.lvl>=RANKS[2].lvl;        // Adept (lvl 9)
+const isAutoBrew=()=>G.hero.lvl>=RANKS[5].lvl;               // Magus (lvl 36)
+// Alchemy: skill curve, slot count, quality roll, immunity check.
+function xpForAlchemyLevel(lvl){return Math.floor(15*Math.pow(1.05,Math.max(0,lvl-1)));}
+function brewSlotCount(){return 1+Math.floor((G.alchemy?.lvl||1)/25);} // 1@1, 2@25, 3@50, 4@75, 5@100
+function rollBrewQuality(){
+  const lv=G.alchemy?.lvl||1;
+  if(lv>=ALCHEMY_LVL_CAP)return 1.00;
+  const base=0.50+(lv/ALCHEMY_LVL_CAP)*0.50;
+  const variance=(Math.random()-0.5)*0.20;
+  return Math.max(0.40,Math.min(0.99,Math.round((base+variance)*20)/20));
+}
+function hasImmunity(elementId){
+  return G.buffs.some(b=>b.stat==='immune:'+elementId||b.stat==='immune:all');
+}
+function bumpAlchemyXp(amount){
+  const a=G.alchemy;a.xp+=amount;
+  while(a.lvl<ALCHEMY_LVL_CAP&&a.xp>=xpForAlchemyLevel(a.lvl+1)){
+    a.xp-=xpForAlchemyLevel(a.lvl+1);a.lvl++;
+    logLine(`★ Alchemy Lv ${a.lvl} (brew slots: ${brewSlotCount()}${a.lvl===ALCHEMY_LVL_CAP?', perfect brews unlocked':''})`,'rank');
+  }
+  if(a.lvl>=ALCHEMY_LVL_CAP)a.xp=0;
+}
+// Brewing — startBrew, completeBrew, tickBrew, cancelBrew, tryAutoBrew
+function getRecipe(id){return POTION_RECIPES.find(r=>r.id===id);}
+function startBrew(recipeId){
+  const r=getRecipe(recipeId);if(!r)return;
+  const slots=brewSlotCount();
+  if(G.alchemy.brewSlots.length>=slots){logLine('All brew slots full.','sys');return;}
+  if(!canPay(r.cost)){logLine(`Cannot afford ${r.name}.`,'sys');return;}
+  payCost(r.cost);
+  if(!r.brewTime){completeBrew(recipeId);return;}
+  G.alchemy.brewSlots.push({id:recipeId,timeLeft:r.brewTime});
+  logLine(`Brewing ${r.name} (${r.brewTime}s).`,'sys');
+}
+function payCost(c){
+  if(c.gold)G.gold-=c.gold;
+  if(c.dust)G.materials.dust-=c.dust;
+  if(c.crystal)G.materials.crystal-=c.crystal;
+  if(c.gem)G.materials.gem-=c.gem;
+  if(c.herb)G.materials.herb-=c.herb;
+}
+function refundCost(c,frac){
+  if(c.gold)G.gold+=Math.floor(c.gold*frac);
+  if(c.dust)G.materials.dust+=Math.floor(c.dust*frac);
+  if(c.crystal)G.materials.crystal+=Math.floor(c.crystal*frac);
+  if(c.gem)G.materials.gem+=Math.floor(c.gem*frac);
+  if(c.herb)G.materials.herb+=Math.floor(c.herb*frac);
+}
+function completeBrew(recipeId){
+  const r=getRecipe(recipeId);if(!r)return;
+  const q=rollBrewQuality();
+  const qKey=q.toFixed(2);
+  G.alchemy.potions[recipeId]=G.alchemy.potions[recipeId]||{};
+  G.alchemy.potions[recipeId][qKey]=(G.alchemy.potions[recipeId][qKey]||0)+1;
+  bumpAlchemyXp(ALCHEMY_XP_PER_TIER[Math.min(r.tier,ALCHEMY_XP_PER_TIER.length-1)]);
+  const qLabel=q>=1?'★ Q100 perfect':`Q${Math.round(q*100)}`;
+  logLine(`✦ Brewed ${r.name} ${qLabel}`,'loot');
+  tryAutoBrew();
+}
+function brewSpeedMul(){
+  // Lab Imp researchSpeed bonus also flows into brew speed (per plan §F).
+  const rs=G.baseStats.researchSpeed||0;
+  return 1+rs;
+}
+function tickBrew(){
+  if(!G.alchemy.brewSlots.length)return;
+  const finished=[];
+  for(const s of G.alchemy.brewSlots){
+    s.timeLeft-=TICK_S*brewSpeedMul();
+    if(s.timeLeft<=0)finished.push(s);
+  }
+  if(finished.length){
+    G.alchemy.brewSlots=G.alchemy.brewSlots.filter(s=>!finished.includes(s));
+    for(const s of finished)completeBrew(s.id);
+  }
+}
+function cancelBrew(slotIdx){
+  const s=G.alchemy.brewSlots[slotIdx];if(!s)return;
+  const r=getRecipe(s.id);if(r)refundCost(r.cost,0.5);
+  G.alchemy.brewSlots.splice(slotIdx,1);
+  logLine(`Cancelled ${r?r.name:'brew'}; 50% refund.`,'sys');
+}
+function tryAutoBrew(){
+  if(!isAutoBrew()||!G.alchemy.autoBrew)return;
+  let safety=10; // never busy-loop
+  while(safety-- > 0 && G.alchemy.brewSlots.length<brewSlotCount()){
+    const r=getRecipe(G.alchemy.autoBrew);if(!r)return;
+    if(!canPay(r.cost))return;
+    startBrew(G.alchemy.autoBrew);
+    if(!r.brewTime)continue; // instant brew, try to fill another slot
+    return; // time-gated brew filled this slot; bail
+  }
+}
+// Consumption — consumePotion, tickAutoConsume
+function consumePotion(recipeId,qKey){
+  const r=getRecipe(recipeId);if(!r)return;
+  const buckets=G.alchemy.potions[recipeId];
+  if(!buckets)return;
+  // If qKey not provided, pick highest-quality bucket with stock
+  if(!qKey){
+    const keys=Object.keys(buckets).filter(k=>buckets[k]>0).sort((a,b)=>parseFloat(b)-parseFloat(a));
+    if(!keys.length)return;
+    qKey=keys[0];
+  }
+  if(!buckets[qKey]||buckets[qKey]<=0)return;
+  buckets[qKey]--;
+  if(buckets[qKey]<=0)delete buckets[qKey];
+  if(Object.keys(buckets).length===0)delete G.alchemy.potions[recipeId];
+  const q=parseFloat(qKey);
+  const e=r.effect;
+  let logCls='heal';
+  switch(e.kind){
+    case 'heal':
+      G.hero.hp=Math.min(G.hero.maxHp,G.hero.hp+e.amount*q);
+      logLine(`+ ${r.name} Q${Math.round(q*100)}: heal ${Math.floor(e.amount*q)} HP.`,'heal');
+      break;
+    case 'mana':
+      G.hero.mana=Math.min(G.hero.maxMana,G.hero.mana+e.amount*q);
+      logLine(`~ ${r.name} Q${Math.round(q*100)}: +${Math.floor(e.amount*q)} mana.`,'cast');
+      break;
+    case 'buff':
+      G.buffs.push({stat:e.stat,amt:e.amt*q,dur:e.dur*q,_potionId:recipeId,_q:q,name:`${r.name} Q${Math.round(q*100)}`});
+      recomputeStats();
+      logLine(`✦ ${r.name} Q${Math.round(q*100)} active.`,'cast');
+      break;
+    case 'cure':
+      if(r.element==='all'){
+        const n=G.hero.ailments.length;G.hero.ailments=[];
+        if(n>0)recomputeStats();
+        logLine(`+ ${r.name}: cleared ${n} ailment${n!==1?'s':''}.`,'heal');
+      } else {
+        const aid=ELEMENT_TO_AILMENT[r.element];
+        const before=G.hero.ailments.length;
+        G.hero.ailments=G.hero.ailments.filter(a=>a.id!==aid);
+        if(G.hero.ailments.length<before)recomputeStats();
+        logLine(`+ ${r.name}: cleared ${AILMENT_TYPES[aid]?.name||r.element}.`,'heal');
+      }
+      break;
+    case 'immunity':
+      G.buffs.push({stat:'immune:'+r.element,amt:1,dur:e.dur*q,_potionId:recipeId,_q:q,name:`${r.name} Q${Math.round(q*100)}`});
+      logLine(`✦ ${r.name} Q${Math.round(q*100)} active (${Math.floor(e.dur*q)}s).`,'cast');
+      break;
+  }
+}
+function tickAutoConsume(){
+  if(!G.hero.alive)return;
+  for(const id in G.alchemy.autoDrink){
+    const cfg=G.alchemy.autoDrink[id];
+    if(!cfg||!cfg.enabled)continue;
+    const r=getRecipe(id);if(!r)continue;
+    const buckets=G.alchemy.potions[id];
+    if(!buckets||Object.keys(buckets).length===0)continue;
+    if(r.effect.kind==='heal'&&G.hero.hp/G.hero.maxHp<cfg.threshold)consumePotion(id);
+    else if(r.effect.kind==='mana'&&G.hero.mana/G.hero.maxMana<cfg.threshold)consumePotion(id);
+  }
+}
+// Ailments — applyAilment + tickAilments
+function applyAilment(elementId,enemyLvl){
+  const aid=ELEMENT_TO_AILMENT[elementId];
+  if(!aid)return false;
+  if(hasImmunity(elementId)){logLine(`✦ Resisted ${AILMENT_TYPES[aid].name}.`,'cast');return false;}
+  const a=AILMENT_TYPES[aid];
+  const sev=1+Math.max(0,enemyLvl-1)*0.05; // +5% per enemy level above 1
+  const dur=a.baseDur;
+  const inst={id:aid,remaining:dur,source:elementId};
+  if(a.kind==='dot'||a.kind==='mixed')inst.dps=(a.baseDps||0)*sev;
+  if(a.kind==='stat'||a.kind==='mixed'){
+    inst.statMod={};
+    for(const k in a.statMod)inst.statMod[k]=a.statMod[k]*sev;
+  }
+  // Replace existing instance of same id rather than stacking — refresh duration.
+  G.hero.ailments=G.hero.ailments.filter(x=>x.id!==aid);
+  G.hero.ailments.push(inst);
+  if(inst.statMod)recomputeStats();
+  logLine(`⚠ Afflicted: ${a.name} (${dur}s)`,'die');
+  // Auto-cure hook
+  const cureId=G.alchemy.autoCure[aid];
+  if(cureId&&G.alchemy.potions[cureId]&&Object.keys(G.alchemy.potions[cureId]).length>0){
+    consumePotion(cureId);
+  }
+  return true;
+}
+function tickAilments(){
+  if(!G.hero.ailments.length)return;
+  let statChange=false;
+  for(const a of G.hero.ailments){
+    if(a.dps)G.hero.hp-=a.dps*TICK_S;
+    a.remaining-=TICK_S;
+  }
+  const before=G.hero.ailments.length;
+  G.hero.ailments=G.hero.ailments.filter(a=>{
+    if(a.remaining>0)return true;
+    if(a.statMod)statChange=true;
+    return false;
+  });
+  if(G.hero.ailments.length!==before&&statChange)recomputeStats();
+  if(G.hero.hp<=0&&G.hero.alive)onHeroDead();
+}
 // Passive combos — dual-element synergies. Equip ≥1 spell of each element in
 // `els` to activate. Bonuses fold into recomputeStats; effectTags route through
 // effectTagSum (same path as legendary tags). Optional `doubleNode` is an
@@ -1755,8 +2177,22 @@ function recomputeStats(){
     }
   }
   for(const buff of G.buffs){
+    if(buff.stat&&buff.stat.startsWith('immune:'))continue; // markers, not stats
     if(buff.stat==='dmgMul')s.dmgMul*=(1+buff.amt);
     else s[buff.stat]=(s[buff.stat]||0)+buff.amt;
+  }
+  // Hero ailments — additive negative shifts (statMod values are already negative).
+  // dmgMul ailments fold multiplicatively to mirror buff handling above; floor at 0.1
+  // so a stack of curses can't reduce damage to zero or below.
+  if(G.hero.ailments&&G.hero.ailments.length){
+    for(const a of G.hero.ailments){
+      if(!a.statMod)continue;
+      for(const k in a.statMod){
+        const v=a.statMod[k];
+        if(k==='dmgMul')s.dmgMul=Math.max(0.1,s.dmgMul*(1+v));
+        else s[k]=(s[k]||0)+v;
+      }
+    }
   }
   G.baseStats=s;
   G.hero.maxHp=s.maxHp; G.hero.maxMana=s.maxMana;
@@ -2251,7 +2687,7 @@ function trialGearTier(floor){
 function awardTrialMaterials(floor){
   const dust=20+Math.floor(floor*5+Math.pow(floor,1.15));
   G.materials.dust+=dust;
-  let crystal=0,gem=0;
+  let crystal=0,gem=0,herb=0;
   if(floor>=5){
     crystal=2+Math.floor(floor*0.4+Math.pow(floor,0.8));
     G.materials.crystal+=crystal;
@@ -2260,9 +2696,13 @@ function awardTrialMaterials(floor){
     gem=Math.max(1,Math.floor(floor/15));
     G.materials.gem+=gem;
   }
+  // Herb scales with floor too — alchemy is meant to keep up with trials.
+  herb=4+Math.floor(floor*1.2+Math.pow(floor,0.85));
+  G.materials.herb=(G.materials.herb||0)+herb;
   const parts=[`+${dust} dust`];
   if(crystal)parts.push(`+${crystal} crystal`);
   if(gem)parts.push(`+${gem} gem`);
+  parts.push(`+${herb} herb`);
   logLine(`◇ Trial spoils: ${parts.join(' · ')}`,'loot');
 }
 // Award any milestones the player has just qualified for. Idempotent — each
@@ -2508,6 +2948,13 @@ function combatTick(){
     let dmg=Math.max(1,e.ref.atk-s.def/2+ri(-1,1));
     G.hero.hp-=dmg;
     logLine(`${e.ref.name} hits you for ${Math.floor(dmg)}.`,'dmg');
+    // Ailment proc: enemies attempt to inflict an ailment matching their element.
+    // Bosses always roll, normal mobs scale by enemy level capped at 25%.
+    if(e.ref.el&&isAlchemyUnlocked()){
+      const enemyLvl=e.ref.atk>0?Math.max(1,Math.ceil(Math.log10(e.ref.hp+1)*4)):1;
+      const baseChance=e.isBoss?0.60:Math.min(0.25,0.05+0.005*enemyLvl);
+      if(Math.random()<baseChance)applyAilment(e.ref.el,enemyLvl);
+    }
     if(G.hero.hp<=0){onHeroDead();return;}
   }
 }
@@ -2638,6 +3085,7 @@ function rollGearDrop(e){
     G.materials.dust+=100+G.zoneIdx*50;
     if(G.zoneIdx>=2)G.materials.crystal+=20+G.zoneIdx*8;
     if(G.zoneIdx>=4)G.materials.gem+=2;
+    G.materials.herb=(G.materials.herb||0)+5+G.zoneIdx*3;
   } else if(Math.random()<0.05){
     const item=rollGearForZone(G.zoneIdx,0);
     G.gearInventory.push(item);
@@ -2653,6 +3101,7 @@ function onEnemyDead(e){
   G.loot.push({x:e.x,y:e.y,ttl:8,name:e.ref.name,gold,xp});
   logLine(`Slain: ${e.ref.name}. +${fmtG(gold)} +${fmt(xp)}xp`,'loot');
   if(Math.random()<0.4){G.materials.dust+=1+ri(0,G.zoneIdx+1);}
+  if(Math.random()<0.4+0.05*G.zoneIdx){G.materials.herb=(G.materials.herb||0)+1+ri(0,G.zoneIdx);}
   // NO spark from boss anymore — only from awakening
   rollGearDrop(e);
   G.mobs=G.mobs.filter(m=>m!==e);
@@ -3231,14 +3680,18 @@ function awaken(){
     if(node?.bonus?.startLvl&&node.bonus.startLvl>startLvl)startLvl=node.bonus.startLvl;
   }
   G.gold=0;
-  G.materials={dust:0,crystal:0,gem:0};
-  G.hero.lvl=startLvl;G.hero.xp=0;
+  G.materials={dust:0,crystal:0,gem:0,herb:0};
+  G.hero.lvl=startLvl;G.hero.xp=0;G.hero.ailments=[];
   G.zoneIdx=0;G.unlocked=0;G.kills=0;
   G.inDungeon=false;G.dungeonReturn=null;G.dungeonTimeLeft=0;
   if(!keepSpells){G.knownSpells=['spark'];G.equippedSpells=['spark',null,null,null,null,null,null,null];}
   ELEMENTS.forEach(e=>{G.elements[e]=0;G.elementXp[e]=0;});
   BUILDINGS.forEach(b=>G.buildings[b.id]=0);
-  G.golems={dust:0,crystal:0,gem:0};
+  G.golems={dust:0,crystal:0,gem:0,herb:0};
+  // Alchemy: keep skill (lvl/xp), cabinet, autoDrink/autoCure preferences as
+  // meta-progression (mirrors spellMastery). Clear in-flight brew slots only.
+  G.alchemy.brewSlots=[];
+  G.alchemy.autoBrew=null;
   if(!keepFamiliars)G.familiars=[];
   if(!keepGear){
     G.gear={hat:null,robe:null,staff:null,ring:null,amulet:null};
@@ -3324,9 +3777,9 @@ function b64ToUtf8(s){
 }
 function exportSave(){
   const d={
-    v:25,
+    v:26,
     gold:G.gold, spark:G.spark, materials:G.materials,
-    hero:{lvl:G.hero.lvl,xp:G.hero.xp,hp:G.hero.hp,mana:G.hero.mana},
+    hero:{lvl:G.hero.lvl,xp:G.hero.xp,hp:G.hero.hp,mana:G.hero.mana,ailments:G.hero.ailments||[]},
     zoneIdx:G.zoneIdx, unlocked:G.unlocked, kills:G.kills,
     inDungeon:false, // reset dungeon state on save
     knownSpells:G.knownSpells, equippedSpells:G.equippedSpells,
@@ -3348,6 +3801,7 @@ function exportSave(){
       upgrades:G.trial.upgrades,
       milestonesAwarded:G.trial.milestonesAwarded,
     },
+    alchemy:G.alchemy,
     autoExplore:G.autoExplore,
     theme:G.theme,
     eclipseSeen:G.eclipseSeen,
@@ -3366,8 +3820,9 @@ function importSave(str){
     const ver=d.v||1;
     const legacy=ver<5;
     G.gold=d.gold||0;G.spark=d.spark||0;
-    G.materials={dust:0,crystal:0,gem:0,...(d.materials||{})};
+    G.materials={dust:0,crystal:0,gem:0,herb:0,...(d.materials||{})};
     G.hero.lvl=d.hero?.lvl||1;G.hero.xp=d.hero?.xp||0;
+    G.hero.ailments=Array.isArray(d.hero?.ailments)?d.hero.ailments:[];
     G.zoneIdx=d.zoneIdx||0;G.unlocked=d.unlocked||0;G.kills=d.kills||0;
     G.inDungeon=false;G.dungeonReturn=null;G.dungeonTimeLeft=0;
     G.knownSpells=d.knownSpells||['spark'];
@@ -3376,7 +3831,7 @@ function importSave(str){
     G.elements={fire:0,water:0,earth:0,air:0,light:0,shadow:0,blood:0,arcane:0,...(d.elements||{})};
     G.elementXp={fire:0,water:0,earth:0,air:0,light:0,shadow:0,blood:0,arcane:0,...(d.elementXp||{})};
     G.buildings={...G.buildings,...(d.buildings||{})};
-    G.golems={dust:0,crystal:0,gem:0,...(d.golems||{})};
+    G.golems={dust:0,crystal:0,gem:0,herb:0,...(d.golems||{})};
     G.familiars=d.familiars||[];
     if(legacy){
       // Pre-v5 used recipe-id strings. Reset wardrobe to avoid corrupt instances.
@@ -3419,6 +3874,16 @@ function importSave(str){
         G.trial.milestonesAwarded[m.floor]=true;
       }
     }
+    // Alchemy — initialize defaults for v<26 saves; otherwise hydrate.
+    G.alchemy={
+      lvl:d.alchemy?.lvl||1,
+      xp:d.alchemy?.xp||0,
+      potions:d.alchemy?.potions||{},
+      brewSlots:Array.isArray(d.alchemy?.brewSlots)?d.alchemy.brewSlots:[],
+      autoDrink:d.alchemy?.autoDrink||{},
+      autoCure:d.alchemy?.autoCure||{},
+      autoBrew:d.alchemy?.autoBrew||null,
+    };
     G.autoExplore=d.autoExplore!==false;
     G.eclipseSeen=!!d.eclipseSeen;
     G.uiInvSort=d.uiInvSort||'rarity';
@@ -3506,6 +3971,7 @@ function matStripHTML(){
     <span class="m dust"><span class="lbl">·dust</span><span class="val">${fmt(G.materials.dust)}</span></span>
     <span class="m crystal"><span class="lbl">◇crystal</span><span class="val">${fmt(G.materials.crystal)}</span></span>
     <span class="m gem"><span class="lbl">◆gem</span><span class="val">${fmt(G.materials.gem)}</span></span>
+    <span class="m herb"><span class="lbl">❀herb</span><span class="val">${fmt(G.materials.herb||0)}</span></span>
   </div>`;
 }
 function costStrHTML(c){
@@ -3580,7 +4046,10 @@ function renderMap(){
   }
   for(const l of G.loot)grid[l.y][l.x]={ch:'$',cls:'loot',title:lootTooltip(l)};
   for(const m of G.mobs)grid[m.y][m.x]={ch:m.ref.glyph,cls:m.isBoss?'boss':'mob',title:mobTooltip(m)};
-  if(G.hero.alive)grid[G.hero.pos.y][G.hero.pos.x]={ch:'@',cls:'hero'};
+  if(G.hero.alive){
+    const heroCls=(G.hero.ailments&&G.hero.ailments.length)?'hero ailing':'hero';
+    grid[G.hero.pos.y][G.hero.pos.x]={ch:'@',cls:heroCls};
+  }
   let html='';
   for(let y=0;y<MAP_H;y++){
     for(let x=0;x<MAP_W;x++){
@@ -3654,10 +4123,20 @@ function renderHero(){
     }
     return `<span class="buff-pill" style="border-color:var(--${c.color});color:var(--${c.color})" title="${c.desc}">${c.icon} ${c.name} ${parts.join(', ')}${mul>1?' ×2':''}</span>`;
   }).join('');
-  $('buff-strip').innerHTML=G.buffs.map(b=>{
+  // Ailment pills come first so the player sees threats before buffs.
+  const ailmentPills=(G.hero.ailments||[]).map(a=>{
+    const t=AILMENT_TYPES[a.id];if(!t)return '';
+    const dotStr=a.dps?` · ${a.dps.toFixed(1)} dps`:'';
+    return `<span class="buff-pill ailment" title="${t.name} ailment">${t.glyph} ${t.name} · ${a.remaining.toFixed(1)}s${dotStr}</span>`;
+  }).join('');
+  $('buff-strip').innerHTML=ailmentPills+G.buffs.map(b=>{
     const sp=SPELLS.find(s=>s.id===b._spellId);
-    return `<span class="buff-pill">${sp?sp.name:b.stat} · ${b.dur.toFixed(1)}s</span>`;
+    const label=b.name||(sp?sp.name:b.stat);
+    return `<span class="buff-pill">${label} · ${b.dur.toFixed(1)}s</span>`;
   }).join('')+comboPills;
+  // Layer-2 visual cue: hero panel pulses red whenever any ailment is active.
+  const hp=$('hero-panel');
+  if(hp)hp.classList.toggle('ailing',(G.hero.ailments||[]).length>0);
   // Stats grid only changes on level up / building / research / awakening / gear
   // — skip the innerHTML rebuild when nothing meaningful changed.
   const sh=`${s.atk.toFixed(1)}|${s.def}|${s.spd.toFixed(2)}|${s.manaRegen.toFixed(1)}|${s.crit.toFixed(2)}|${s.cdmg.toFixed(2)}|${s.dmgMul.toFixed(2)}|${s.goldFind.toFixed(2)}|${s.xpMul.toFixed(2)}|${s.researchSpeed.toFixed(2)}|${(s.goldPerSec||0)}|${(s.chestBonus||0)}`;
@@ -4619,6 +5098,223 @@ function renderTrial(){
   });
 }
 
+// Alchemy categories used for cabinet/recipe grouping (collapsible).
+const ALCHEMY_CATEGORIES=[
+  {id:'restorative', name:'Restorative'},
+  {id:'buff',        name:'Combat Buffs'},
+  {id:'immunity',    name:'Immunities'},
+  {id:'cure',        name:'Cures'},
+  {id:'booster',     name:'Boosters'},
+];
+function renderAlchemy(){
+  if(!isAlchemyUnlocked()){
+    $('alchemy-lock').textContent=`unlocks at Adept (lvl ${RANKS[2].lvl})`;
+    $('alchemy-skill-bar').innerHTML='';
+    $('brewing-status').innerHTML=`<div class="sub">Sealed.</div>`;
+    $('alchemy-recipes').innerHTML='';
+    $('potion-inventory').innerHTML='';
+    $('potion-summary').textContent='';
+    return;
+  }
+  $('alchemy-lock').textContent='';
+  const a=G.alchemy;
+  const slotCount=brewSlotCount();
+  const used=a.brewSlots.length;
+  // Skill header — alchemy lvl + xp bar (gold at cap)
+  const atCap=a.lvl>=ALCHEMY_LVL_CAP;
+  const next=xpForAlchemyLevel(a.lvl+1);
+  const pct=atCap?100:Math.min(100,(a.xp/next)*100);
+  $('alchemy-skill-bar').innerHTML=`<div class="alchemy-skill">
+    <div class="row1">
+      <span class="lvl">Alchemy Lv ${a.lvl} / ${ALCHEMY_LVL_CAP}</span>
+      <span class="stats">Brew Slots ${used}/${slotCount}${atCap?' · perfect brews':''}</span>
+    </div>
+    <div class="bar xpbar${atCap?' maxed':''}"><span style="width:${pct}%"></span><div class="txt">${atCap?'MAX':`xp ${fmt(a.xp)}/${fmt(next)}`}</div></div>
+  </div>`;
+  // Brewing status — N parallel slots
+  let bs='';
+  for(let i=0;i<slotCount;i++){
+    const slot=a.brewSlots[i];
+    if(slot){
+      const r=getRecipe(slot.id);
+      const total=r?r.brewTime:1;
+      const p=Math.max(0,Math.min(100,(1-slot.timeLeft/total)*100));
+      bs+=`<div class="brew-slot">
+        <div>
+          <div class="nm">${r?r.name:slot.id}</div>
+          <div class="det">${fmtTime(Math.max(0,slot.timeLeft))} remaining</div>
+          <div class="bar"><span style="width:${p}%;background:var(--hi)"></span><div class="txt">${p.toFixed(0)}%</div></div>
+        </div>
+        <button class="act danger" data-cancel-brew="${i}">Cancel</button>
+      </div>`;
+    } else {
+      bs+=`<div class="brew-slot empty">
+        <div><div class="nm">Empty Slot ${i+1}</div><div class="det">— ready to brew —</div></div>
+        <div></div>
+      </div>`;
+    }
+  }
+  // Auto-brew (Magus+)
+  if(isAutoBrew()){
+    const opts=POTION_RECIPES.map(r=>`<option value="${r.id}"${a.autoBrew===r.id?' selected':''}>${r.name}</option>`).join('');
+    bs+=`<div class="row" style="margin-top:4px;align-items:center">
+      <label class="sub">auto-brew when slot opens:</label>
+      <select class="act" id="auto-brew-select"><option value="">— off —</option>${opts}</select>
+    </div>`;
+  }
+  $('brewing-status').innerHTML=`<div style="margin-bottom:6px">${matStripHTML()}</div>${bs}`;
+  $('brewing-status').querySelectorAll('[data-cancel-brew]').forEach(b=>{
+    b.onclick=()=>{cancelBrew(parseInt(b.dataset.cancelBrew));renderAlchemy();renderTop();};
+  });
+  if($('auto-brew-select')){
+    $('auto-brew-select').onchange=e=>{a.autoBrew=e.target.value||null;tryAutoBrew();renderAlchemy();};
+  }
+  // Recipes — collapsible per category
+  let rh='';
+  for(const cat of ALCHEMY_CATEGORIES){
+    const list=POTION_RECIPES.filter(r=>r.category===cat.id);
+    if(list.length===0)continue;
+    const key='alchemy:'+cat.id;
+    const collapsed=G.uiCollapsed[key]!==false;
+    rh+=`<div class="el-group">
+      <div class="el-group-header" data-toggle-alchemy="${cat.id}">
+        <span style="color:var(--hi);font-weight:700">${cat.name}</span>
+        <span class="count">${list.length} recipes</span>
+        <span class="toggle">${collapsed?'+':'−'}</span>
+      </div>`;
+    if(!collapsed){
+      rh+=`<div class="el-group-body">`;
+      for(const r of list){
+        const can=canPay(r.cost)&&used<slotCount;
+        const tierLabel=['Common','Uncommon','Rare','Epic'][r.tier]||'?';
+        const brewLabel=r.brewTime?fmtTime(r.brewTime):'instant';
+        rh+=`<div class="forge-group">
+          <div>
+            <div><span class="nm" style="color:var(--rar-${['common','uncommon','rare','epic'][r.tier]||'common'})">${r.glyph} ${r.name}</span> <span class="sub">${tierLabel} · ${brewLabel}</span></div>
+            <div class="det">${r.desc}</div>
+            <div class="cost">cost: ${costStrHTML(r.cost)}</div>
+          </div>
+          <button class="act" data-brew="${r.id}" ${can?'':'disabled'}>${used>=slotCount?'SLOTS FULL':r.brewTime?'Brew':'Brew (instant)'}</button>
+        </div>`;
+      }
+      rh+=`</div>`;
+    }
+    rh+=`</div>`;
+  }
+  $('alchemy-recipes').innerHTML=rh;
+  $('alchemy-recipes').querySelectorAll('[data-toggle-alchemy]').forEach(h=>{
+    h.onclick=()=>{
+      const k='alchemy:'+h.dataset.toggleAlchemy;
+      G.uiCollapsed[k]=G.uiCollapsed[k]===false?true:false;
+      renderAlchemy();
+    };
+  });
+  $('alchemy-recipes').querySelectorAll('button[data-brew]').forEach(b=>{
+    b.onclick=()=>{startBrew(b.dataset.brew);renderAlchemy();renderTop();renderHero();};
+  });
+  // Potion Cabinet
+  const ownedRecipes=Object.keys(a.potions).filter(id=>{
+    const buckets=a.potions[id];
+    return buckets&&Object.keys(buckets).reduce((s,k)=>s+buckets[k],0)>0;
+  });
+  const totalPotions=ownedRecipes.reduce((s,id)=>{
+    const b=a.potions[id];return s+Object.keys(b).reduce((ss,k)=>ss+b[k],0);
+  },0);
+  $('potion-summary').textContent=`${totalPotions} potion${totalPotions===1?'':'s'}`;
+  if(totalPotions===0){
+    $('potion-inventory').innerHTML=`<div class="sub">Empty. Brew something to fill the cabinet.</div>`;
+  } else {
+    let ph='';
+    for(const cat of ALCHEMY_CATEGORIES){
+      const recs=POTION_RECIPES.filter(r=>r.category===cat.id&&ownedRecipes.includes(r.id));
+      if(recs.length===0)continue;
+      const key='alchemy-cabinet:'+cat.id;
+      const collapsed=G.uiCollapsed[key]!==false;
+      const catTotal=recs.reduce((s,r)=>{const b=a.potions[r.id]||{};return s+Object.keys(b).reduce((ss,k)=>ss+b[k],0);},0);
+      ph+=`<div class="el-group">
+        <div class="el-group-header" data-toggle-cabinet="${cat.id}">
+          <span style="color:var(--hi);font-weight:700">${cat.name}</span>
+          <span class="count">${catTotal} potion${catTotal===1?'':'s'}</span>
+          <span class="toggle">${collapsed?'+':'−'}</span>
+        </div>`;
+      if(!collapsed){
+        ph+=`<div class="el-group-body">`;
+        for(const r of recs){
+          const buckets=a.potions[r.id]||{};
+          const keys=Object.keys(buckets).filter(k=>buckets[k]>0).sort((x,y)=>parseFloat(y)-parseFloat(x));
+          const rTotal=keys.reduce((s,k)=>s+buckets[k],0);
+          // Auto-config UI varies by effect kind
+          let autoCfg='';
+          const ek=r.effect.kind;
+          if(ek==='heal'||ek==='mana'){
+            const cfg=a.autoDrink[r.id]||{threshold:0.30,enabled:false};
+            autoCfg=`<label class="sub" style="font-size:11px">auto: ${ek==='heal'?'HP':'MANA'} &lt;
+              <input type="number" min="5" max="95" step="5" value="${Math.round((cfg.threshold||0.30)*100)}" data-auto-thr="${r.id}" style="width:46px"> %
+              <input type="checkbox" data-auto-en="${r.id}" ${cfg.enabled?'checked':''}> on</label>`;
+          } else if(ek==='cure'){
+            const ailmentId=r.element==='all'?'all':ELEMENT_TO_AILMENT[r.element];
+            const cur=a.autoCure[ailmentId];
+            autoCfg=`<label class="sub" style="font-size:11px">
+              <input type="checkbox" data-auto-cure="${r.id}" data-aid="${ailmentId}" ${cur===r.id?'checked':''}>
+              auto-cure ${r.element==='all'?'any':AILMENT_TYPES[ailmentId]?.name||r.element}</label>`;
+          }
+          ph+=`<div class="forge-group">
+            <div style="flex:1">
+              <div><span class="nm">${r.glyph} ${r.name}</span> <span class="sub">${rTotal} total</span></div>
+              ${autoCfg?`<div style="margin-top:2px">${autoCfg}</div>`:''}
+              <div style="margin-top:4px">
+                ${keys.map(k=>{
+                  const q=parseFloat(k),pct=Math.round(q*100);
+                  const perfect=q>=1;
+                  return `<div class="q-row${perfect?' q-perfect':''}">
+                    <span class="q-label">${perfect?'★ Q100 perfect':'Q'+pct}</span>
+                    <span class="q-count">×${buckets[k]}</span>
+                    <button class="act" data-use="${r.id}" data-q="${k}">Use</button>
+                  </div>`;
+                }).join('')}
+              </div>
+            </div>
+          </div>`;
+        }
+        ph+=`</div>`;
+      }
+      ph+=`</div>`;
+    }
+    $('potion-inventory').innerHTML=ph;
+    $('potion-inventory').querySelectorAll('[data-toggle-cabinet]').forEach(h=>{
+      h.onclick=()=>{
+        const k='alchemy-cabinet:'+h.dataset.toggleCabinet;
+        G.uiCollapsed[k]=G.uiCollapsed[k]===false?true:false;
+        renderAlchemy();
+      };
+    });
+    $('potion-inventory').querySelectorAll('button[data-use]').forEach(b=>{
+      b.onclick=()=>{consumePotion(b.dataset.use,b.dataset.q);renderAlchemy();renderHero();renderTop();};
+    });
+    $('potion-inventory').querySelectorAll('input[data-auto-thr]').forEach(i=>{
+      i.onchange=()=>{
+        const id=i.dataset.autoThr;
+        a.autoDrink[id]=a.autoDrink[id]||{threshold:0.30,enabled:false};
+        a.autoDrink[id].threshold=Math.max(0.05,Math.min(0.95,(parseInt(i.value)||30)/100));
+      };
+    });
+    $('potion-inventory').querySelectorAll('input[data-auto-en]').forEach(i=>{
+      i.onchange=()=>{
+        const id=i.dataset.autoEn;
+        a.autoDrink[id]=a.autoDrink[id]||{threshold:0.30,enabled:false};
+        a.autoDrink[id].enabled=i.checked;
+      };
+    });
+    $('potion-inventory').querySelectorAll('input[data-auto-cure]').forEach(i=>{
+      i.onchange=()=>{
+        const id=i.dataset.autoCure,aid=i.dataset.aid;
+        if(i.checked)a.autoCure[aid]=id;
+        else if(a.autoCure[aid]===id)delete a.autoCure[aid];
+      };
+    });
+  }
+}
+
 function renderRitual(){
   if(!isRitualUnlocked()){
     $('ritual-lock').textContent=`unlocks at Adept (lvl ${RANKS[2].lvl})`;
@@ -4816,6 +5512,7 @@ function renderActivePane(){
     case 'ritual': renderRitual(); break;
     case 'crusade': renderCrusade(); break;
     case 'trials': renderTrial(); break;
+    case 'alchemy': renderAlchemy(); break;
     case 'awaken': renderAwaken(); break;
   }
 }
@@ -4855,6 +5552,9 @@ function gameTick(){
     G.hero.mana=Math.min(G.hero.maxMana,G.hero.mana+G.baseStats.manaRegen*TICK_S);
     if(G.baseStats.goldPerSec)G.gold+=G.baseStats.goldPerSec*TICK_S;
   }
+  // Hero ailments tick BEFORE combat so DoT damage applies on the same tick
+  // and any ailment-induced death is registered immediately.
+  if(G.hero.alive)tickAilments();
   // Combat or movement
   if(G.enemy)combatTick();
   else if(G.hero.alive)stepHero();
@@ -4864,7 +5564,7 @@ function gameTick(){
   for(const c of G.chests)if(c.openedTtl)c.openedTtl-=TICK_S;
   G.chests=G.chests.filter(c=>!c.opened||(c.openedTtl||0)>0);
   // Passive systems
-  tickGolems();tickResearch();tickRitual();
+  tickGolems();tickResearch();tickRitual();tickBrew();tickAutoConsume();
   // Render — hot every tick, cold every 2nd tick (skipped briefly after mousedown
   // on controls so innerHTML rebuilds don't destroy buttons mid-click)
   renderHot();
