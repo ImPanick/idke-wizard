@@ -111,6 +111,13 @@ body[data-theme="contrast"]{
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--mono);font-size:13px;line-height:1.35;min-height:100vh;padding:10px}
+/* Subdued ASCII sigil layer behind everything. Low opacity, no pointer events,
+   sits above body bg but below all panels (which have their own solid bg). */
+#bg-art{position:fixed;inset:0;margin:0;padding:14px;pointer-events:none;
+        user-select:none;overflow:hidden;z-index:0;
+        font-family:var(--mono);font-size:22px;line-height:1.35;letter-spacing:6px;
+        color:var(--hi);opacity:0.05;white-space:pre}
+.app{position:relative;z-index:1}
 .app{display:grid;grid-template-columns:minmax(340px,1.3fr) 1fr;gap:8px;max-width:1400px;margin:0 auto;
      grid-template-areas:"top top" "tabs tabs" "left right" "bottom bottom"}
 .panel{background:var(--panel);border:1px solid var(--border);padding:8px 10px;overflow:hidden}
@@ -417,6 +424,7 @@ pre.map .trialBoss{color:var(--gold);font-weight:700}
 .gem-choice:hover{border-color:var(--hi)}
 </style>
 
+<pre id="bg-art" aria-hidden="true"></pre>
 <div class="app">
   <div id="top" class="panel">
     <span class="title">⌬ ASCII IDLE WIZARD ⌬ version: 2.1.5</span>
@@ -5703,12 +5711,36 @@ function bindEvents(){
   });
 }
 
+// Sparse sigil field rendered once on boot and on resize. ~3% of cells get a
+// glyph; the rest stay whitespace so the pattern reads as airy starscape.
+const BG_SIGILS=['✦','❉','✶','⌬','✺','❋','⚯','⚝','☽','⚗','❀','✷','★','⊹','✧','◇','◆','∴','⊙','❖'];
+function renderBgArt(){
+  const el=$('bg-art');if(!el)return;
+  // Tuned to the CSS font-size (22px) + letter-spacing (6px) — overshoot both
+  // dimensions so the field fills wide ultrawides and tall portraits alike.
+  const cols=Math.ceil(window.innerWidth/26)+4;
+  const rows=Math.ceil(window.innerHeight/30)+4;
+  let out='';
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      out+=Math.random()<0.03?BG_SIGILS[Math.floor(Math.random()*BG_SIGILS.length)]:' ';
+    }
+    out+='\n';
+  }
+  el.textContent=out;
+}
+let _bgArtResizeT=null;
+window.addEventListener('resize',()=>{
+  clearTimeout(_bgArtResizeT);
+  _bgArtResizeT=setTimeout(renderBgArt,200);
+});
 function init(){
   applyTheme(G.theme||'dark');
   recomputeStats();
   G.hero.hp=G.hero.maxHp;G.hero.mana=G.hero.maxMana;
   genMap();
   bindEvents();
+  renderBgArt();
   logLine('You step into the Verdant Meadow. Cast a spell, slay something.','sys');
   renderAll();
   setInterval(gameTick,TICK_MS);
