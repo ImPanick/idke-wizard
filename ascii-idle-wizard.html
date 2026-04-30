@@ -1976,20 +1976,27 @@ function tileBlocked(x,y){
   return false;
 }
 function findOpenTile(){
+  // Avoid the hero's tile too — placeChests / spawnMobs run AFTER genMap
+  // sets G.hero.pos, and dropping a chest or mob on top of the hero soft-
+  // locks auto-explore (BFS source==target returns null and stepHero's
+  // fallback can't move because dx=dy=0).
+  const hx=G.hero.pos.x, hy=G.hero.pos.y;
   // Try random tiles first
   for(let i=0;i<400;i++){
     const x=ri(1,MAP_W-2),y=ri(1,MAP_H-2);
     if(!isWalkable(x,y))continue;
+    if(x===hx&&y===hy)continue;
     if(G.mobs.some(m=>m.x===x&&m.y===y))continue;
     if(G.chests.some(c=>c.x===x&&c.y===y&&!c.opened))continue;
     return {x,y};
   }
   // Fall back to systematic scan — guaranteed walkable
   for(let y=1;y<MAP_H-1;y++)for(let x=1;x<MAP_W-1;x++){
+    if(x===hx&&y===hy)continue;
     if(isWalkable(x,y)&&!G.mobs.some(m=>m.x===x&&m.y===y)&&!G.chests.some(c=>c.x===x&&c.y===y&&!c.opened))
       return {x,y};
   }
-  // Truly nowhere — pick any walkable
+  // Truly nowhere — pick any walkable (last resort, hero check dropped)
   for(let y=1;y<MAP_H-1;y++)for(let x=1;x<MAP_W-1;x++)
     if(isWalkable(x,y))return {x,y};
   return {x:2,y:2};
@@ -2413,6 +2420,13 @@ function bfsNextStep(sx,sy,gx,gy){
 // ============================================================
 function stepHero(){
   if(!G.hero.alive||G.enemy)return;
+  // Recovery for the rare case the hero ends a tick standing on an unopened
+  // chest (legacy saves, or any path that bypasses tryMove's chest-open).
+  // Without this, auto-explore would target the chest under our feet, get a
+  // null BFS step (source==target), and the dx=dy=0 fallback would never
+  // move us — soft-locking the run.
+  const standing=G.chests.find(c=>!c.opened&&c.x===G.hero.pos.x&&c.y===G.hero.pos.y);
+  if(standing)openChest(standing);
   let bestMob=null,bestD=Infinity;
   for(const m of G.mobs){
     const d=Math.abs(m.x-G.hero.pos.x)+Math.abs(m.y-G.hero.pos.y);
