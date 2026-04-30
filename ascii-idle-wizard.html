@@ -137,6 +137,10 @@ pre.map .mob,pre.map .boss,pre.map .chestC,pre.map .chestR,pre.map .chestE,pre.m
          color:var(--fg);padding:6px 8px;font-size:11px;white-space:pre;
          z-index:1000;pointer-events:none;font-family:var(--mono);
          box-shadow:0 4px 12px rgba(0,0,0,0.5);max-width:320px;line-height:1.4}
+.gear-tip{position:fixed;background:var(--panel);border:1px solid var(--border);
+          color:var(--fg);padding:8px 10px;font-size:11px;white-space:pre;
+          z-index:1000;pointer-events:none;font-family:var(--mono);
+          box-shadow:0 4px 12px rgba(0,0,0,0.5);max-width:520px;line-height:1.45}
 .mastery-bar{height:3px;background:var(--panel2);margin-top:2px;overflow:hidden}
 .mastery-bar>i{display:block;height:100%;background:var(--hi);width:0%;
                transition:width .15s linear;font-style:normal}
@@ -188,17 +192,17 @@ pre.map .gem{color:var(--mat-gem);font-weight:700}
 .log .line.chest{color:var(--chest-e)}.log .line.blood{color:var(--el-blood)}
 .log .line.legendary{color:var(--rar-legendary);font-weight:700}
 .log .line.dungeon{color:var(--mat-gem);font-weight:700}
-ul.shop{list-style:none;margin:0;padding:0;max-height:520px;overflow-y:auto}
-ul.shop li{display:grid;grid-template-columns:1fr auto;gap:4px 8px;padding:6px 4px;
+.shop{list-style:none;margin:0;padding:0;max-height:520px;overflow-y:auto}
+.shop li{display:grid;grid-template-columns:1fr auto;gap:4px 8px;padding:6px 4px;
            border-bottom:1px dotted var(--row-divider);align-items:center}
-ul.shop .name{color:var(--fg)}
-ul.shop .desc{color:var(--dim);font-size:11px;margin-top:2px}
-ul.shop button{background:var(--bg);color:var(--hi);border:1px solid var(--border);
+.shop .name{color:var(--fg)}
+.shop .desc{color:var(--dim);font-size:11px;margin-top:2px}
+.shop button{background:var(--bg);color:var(--hi);border:1px solid var(--border);
                font-family:var(--mono);font-size:11px;padding:4px 8px;cursor:pointer;min-width:80px;margin-left:4px}
-ul.shop button:hover:not(:disabled){border-color:var(--hi)}
-ul.shop button:disabled{color:var(--dim);cursor:not-allowed}
-ul.shop button.danger:hover{border-color:var(--hp);color:var(--hp)}
-ul.shop .lvl{color:var(--gold);font-size:11px;margin-left:6px}
+.shop button:hover:not(:disabled){border-color:var(--hi)}
+.shop button:disabled{color:var(--dim);cursor:not-allowed}
+.shop button.danger:hover{border-color:var(--hp);color:var(--hp)}
+.shop .lvl{color:var(--gold);font-size:11px;margin-left:6px}
 .zones button{display:block;width:100%;text-align:left;background:var(--bg);color:var(--fg);
               border:1px solid var(--border);font-family:var(--mono);font-size:12px;
               padding:6px 8px;margin-bottom:4px;cursor:pointer}
@@ -238,6 +242,10 @@ textarea.save{width:100%;min-height:60px;background:var(--bg);color:var(--fg);
 .el-group-header .count{color:var(--dim);font-size:11px}
 .el-group-body{padding:4px 8px}
 .el-group.locked .el-group-header{opacity:0.55;cursor:not-allowed}
+/* When an el-group sits as a direct <li> inside a .shop list, the .shop li
+   grid would force its header + body into a 2-column layout. Reset back to
+   block so the header stays a row and the body stacks underneath. */
+.shop li.el-group{display:block;padding:0;border-bottom:none;gap:0}
 select.act{background:var(--panel);color:var(--fg);border:1px solid var(--border);
            font-family:var(--mono);font-size:11px;padding:5px 6px;cursor:pointer}
 select.act:hover{border-color:var(--hi)}
@@ -454,6 +462,7 @@ pre.map .trialBoss{color:var(--gold);font-weight:700}
             <option value="rarity">Rarity (high → low)</option>
             <option value="alpha">Name (A → Z)</option>
             <option value="strength">Strength (best first)</option>
+            <option value="slot">Slot (grouped)</option>
           </select>
         </div>
         <ul class="shop" id="inventory-list"></ul>
@@ -495,7 +504,7 @@ pre.map .trialBoss{color:var(--gold);font-weight:700}
       <div class="panel">
         <h2>Arcane Research <span class="sub" id="research-lock"></span></h2>
         <div id="research-active-wrap"></div>
-        <ul class="shop" id="research-list"></ul>
+        <div class="shop" id="research-list"></div>
       </div>
     </div>
     <div class="tab-pane" id="pane-ritual">
@@ -3290,13 +3299,64 @@ function importSave(str){
 // ============================================================
 // HELPERS
 // ============================================================
+function fmtStatVal(k,v){
+  if(typeof v!=='number')return String(v);
+  if(k.includes('Mul')||k==='goldFind'||k==='crit'||k==='spd')return `+${(v*100).toFixed(0)}%`;
+  if(k==='manaRegen')return `+${v.toFixed(1)}/s`;
+  return `+${v}`;
+}
+function fmtStatDelta(k,d){
+  if(d===0)return '±0';
+  const sign=d>0?'+':'-';
+  const a=Math.abs(d);
+  if(k.includes('Mul')||k==='goldFind'||k==='crit'||k==='spd')return `${sign}${(a*100).toFixed(1)}%`;
+  if(k==='manaRegen')return `${sign}${a.toFixed(2)}/s`;
+  return `${sign}${a}`;
+}
 function statsLine(stats){
-  return Object.entries(stats).map(([k,v])=>{
-    if(typeof v==='number'&&(k.includes('Mul')||k==='goldFind'||k==='crit'||k==='spd'))
-      return `${k}: +${(v*100).toFixed(0)}%`;
-    if(typeof v==='number'&&k==='manaRegen')return `${k}: +${v.toFixed(1)}/s`;
-    return `${k}: +${v}`;
-  }).join(' · ');
+  return Object.entries(stats).map(([k,v])=>`${k}: ${fmtStatVal(k,v)}`).join(' · ');
+}
+// Build the side-by-side comparison text shown by the inventory hover tooltip.
+// Monospace + white-space:pre on the tooltip handles column alignment.
+function gearCompareText(item){
+  const eq=G.gear[item.slot];
+  const r=RARITIES[item.rarity];
+  const lines=[];
+  let head=`${gearLabel(item)} — ${item.slot} · T${item.tier} ${r.label}`;
+  if(item.sockets.length)head+=` · ${item.sockets.length} socket${item.sockets.length>1?'s':''}`;
+  lines.push(head);
+  if(item.legendary&&item.legendaryEffect){
+    lines.push('');
+    lines.push(`✦ ${item.legendaryEffect}`);
+  }
+  lines.push('');
+  if(!eq){
+    lines.push(`No ${item.slot} equipped — strict upgrade.`);
+    lines.push('');
+    lines.push('Stats:');
+    for(const [k,v] of Object.entries(item.stats))lines.push(`  ${k}: ${fmtStatVal(k,v)}`);
+    return lines.join('\n');
+  }
+  const er=RARITIES[eq.rarity];
+  lines.push(`vs equipped: ${gearLabel(eq)}`);
+  lines.push(`             T${eq.tier} ${er.label}${eq.sockets.length?` · ${eq.sockets.length} socket${eq.sockets.length>1?'s':''}`:''}`);
+  lines.push('');
+  // Union of stat keys, ordered by absolute delta so the biggest swings sit
+  // at the top of the table.
+  const keys=[...new Set([...Object.keys(item.stats),...Object.keys(eq.stats)])];
+  keys.sort((a,b)=>Math.abs((item.stats[b]||0)-(eq.stats[b]||0))-Math.abs((item.stats[a]||0)-(eq.stats[a]||0)));
+  const longest=keys.reduce((m,k)=>Math.max(m,k.length),0);
+  for(const k of keys){
+    const a=eq.stats[k]||0, b=item.stats[k]||0;
+    const padK=k.padEnd(longest,' ');
+    lines.push(`  ${padK}  ${fmtStatVal(k,a)} → ${fmtStatVal(k,b)}  (${fmtStatDelta(k,b-a)})`);
+  }
+  if(item.sockets.length!==eq.sockets.length){
+    const d=item.sockets.length-eq.sockets.length;
+    lines.push('');
+    lines.push(`  sockets: ${eq.sockets.length} → ${item.sockets.length}  (${d>0?'+':''}${d})`);
+  }
+  return lines.join('\n');
 }
 function matStripHTML(){
   return `<div class="mat-strip">
@@ -3757,28 +3817,57 @@ function renderGear(){
     };
   });
 
-  // Forge
+  // Forge — collapsible per-slot groups (mirrors Tower/Spellbook/Gems pattern)
   $('mat-strip-forge').innerHTML=matStripHTML();
   const groups=getForgeGroups();
   if(groups.length===0){
     $('forge-list').innerHTML=`<div class="sub">No forgeable duplicates. Get 2 of same slot+tier+rarity.</div>`;
   } else {
+    const bySlot={};
+    for(const g of groups){(bySlot[g.slot]=bySlot[g.slot]||[]).push(g);}
     let fhtml='';
-    for(const g of groups){
-      const cost=forgeCostFor(g.tier,g.rarity);
-      const can=canPay(cost);
-      const nextRarity=RARITY_ORDER[RARITY_ORDER.indexOf(g.rarity)+1];
-      fhtml+=`<div class="forge-group">
-        <div>
-          <div><span class="nm" style="color:var(--${RARITIES[g.rarity].color})">2× ${SLOT_NAMES[g.slot][0]} (${g.slot}, T${g.tier}, ${RARITIES[g.rarity].label})</span> → <span class="nm" style="color:var(--${RARITIES[nextRarity].color})">${RARITIES[nextRarity].label}</span></div>
-          <div class="det">have: ${g.items.length}</div>
-          <div class="cost">cost: ${costStrHTML(cost)}</div>
-        </div>
-        <button class="act" data-forge-slot="${g.slot}" data-forge-tier="${g.tier}" data-forge-rarity="${g.rarity}" ${can?'':'disabled'}>Forge</button>
-      </div>`;
+    for(const slot of GEAR_SLOTS){
+      const list=bySlot[slot];
+      if(!list||list.length===0)continue;
+      // Sort within a slot: tier desc, then rarity desc — strongest dupes first
+      list.sort((a,b)=>b.tier-a.tier||RARITY_ORDER.indexOf(b.rarity)-RARITY_ORDER.indexOf(a.rarity));
+      const key='forge:'+slot;
+      const collapsed=G.uiCollapsed[key]!==false; // default collapsed
+      const totalDupes=list.reduce((s,g)=>s+g.items.length,0);
+      fhtml+=`<div class="el-group">
+        <div class="el-group-header" data-toggle-forge="${slot}">
+          <span style="color:var(--hi);font-weight:700;text-transform:capitalize">${slot}</span>
+          <span class="count">${list.length} forgeable group${list.length>1?'s':''} · ${totalDupes} item${totalDupes>1?'s':''}</span>
+          <span class="toggle">${collapsed?'+':'−'}</span>
+        </div>`;
+      if(!collapsed){
+        fhtml+=`<div class="el-group-body">`;
+        for(const g of list){
+          const cost=forgeCostFor(g.tier,g.rarity);
+          const can=canPay(cost);
+          const nextRarity=RARITY_ORDER[RARITY_ORDER.indexOf(g.rarity)+1];
+          fhtml+=`<div class="forge-group">
+            <div>
+              <div><span class="nm" style="color:var(--${RARITIES[g.rarity].color})">2× ${SLOT_NAMES[g.slot][0]} (T${g.tier}, ${RARITIES[g.rarity].label})</span> → <span class="nm" style="color:var(--${RARITIES[nextRarity].color})">${RARITIES[nextRarity].label}</span></div>
+              <div class="det">have: ${g.items.length}</div>
+              <div class="cost">cost: ${costStrHTML(cost)}</div>
+            </div>
+            <button class="act" data-forge-slot="${g.slot}" data-forge-tier="${g.tier}" data-forge-rarity="${g.rarity}" ${can?'':'disabled'}>Forge</button>
+          </div>`;
+        }
+        fhtml+=`</div>`;
+      }
+      fhtml+=`</div>`;
     }
     $('forge-list').innerHTML=fhtml;
-    $('forge-list').querySelectorAll('button').forEach(b=>{
+    $('forge-list').querySelectorAll('[data-toggle-forge]').forEach(h=>{
+      h.onclick=()=>{
+        const k='forge:'+h.dataset.toggleForge;
+        G.uiCollapsed[k]=G.uiCollapsed[k]===false?true:false;
+        renderGear();
+      };
+    });
+    $('forge-list').querySelectorAll('button[data-forge-slot]').forEach(b=>{
       b.onclick=()=>{
         forgeCombine(b.dataset.forgeSlot,parseInt(b.dataset.forgeTier),b.dataset.forgeRarity);
         renderGear();renderHero();renderTop();
@@ -3861,37 +3950,72 @@ function renderGear(){
   $('treasure-maps-row').innerHTML=tm;
   if($('btn-use-map'))$('btn-use-map').onclick=()=>{useTreasureMap();renderGear();renderTop();renderMap();};
 
-  // Inventory
+  // Inventory — flat list for rarity/alpha/strength sorts, collapsible
+  // per-slot groups when sortMode==='slot'. data-cmp-id on each <li> drives
+  // the gear-comparison hover tooltip wired up in bindEvents().
   $('inv-summary').textContent=`${G.gearInventory.length} items`;
   const sortMode=G.uiInvSort||'rarity';
   if($('inv-sort'))$('inv-sort').value=sortMode;
-  const sorted=sortGear(G.gearInventory,sortMode);
+  function invItemHTML(item){
+    const r=RARITIES[item.rarity];
+    const sellPrice=gearSellPrice(item);
+    let extra='';
+    if(item.legendary&&item.legendaryEffect)extra=`<div style="color:var(--rar-legendary);font-size:11px;margin-top:2px">${item.legendaryEffect}</div>`;
+    return `<li class="inv-item r-${r.color.replace('rar-','')}" data-cmp-id="${item.id}">
+      <div>
+        <div><span class="nm">${gearLabel(item)}</span> <span class="sub">${item.slot} · T${item.tier} ${r.label}${item.sockets.length?` · ${item.sockets.length} socket${item.sockets.length>1?'s':''}`:''}</span></div>
+        <div class="desc">${statsLine(item.stats)}</div>
+        ${extra}
+        ${item.sockets.length>0?gemDescHTML(item):''}
+      </div>
+      <div class="actions">
+        <button data-equip-id="${item.id}">Equip</button>
+        ${item.sockets.length>0?`<button data-sock-id="${item.id}">Socket</button>`:''}
+        <button data-sell-id="${item.id}" class="warn" title="${fmtG(sellPrice)}">Sell</button>
+        <button data-salv-id="${item.id}" class="danger">Salvage</button>
+      </div>
+    </li>`;
+  }
   let inv='';
-  if(sorted.length===0){
+  if(G.gearInventory.length===0){
     inv='<li><span class="sub">Empty.</span></li>';
-  } else {
-    for(const item of sorted){
-      const r=RARITIES[item.rarity];
-      const sellPrice=gearSellPrice(item);
-      let extra='';
-      if(item.legendary&&item.legendaryEffect)extra=`<div style="color:var(--rar-legendary);font-size:11px;margin-top:2px">${item.legendaryEffect}</div>`;
-      inv+=`<li class="inv-item r-${r.color.replace('rar-','')}">
-        <div>
-          <div><span class="nm">${gearLabel(item)}</span> <span class="sub">${item.slot} · T${item.tier} ${r.label}${item.sockets.length?` · ${item.sockets.length} socket${item.sockets.length>1?'s':''}`:''}</span></div>
-          <div class="desc">${statsLine(item.stats)}</div>
-          ${extra}
-          ${item.sockets.length>0?gemDescHTML(item):''}
+  } else if(sortMode==='slot'){
+    // Sub-sort within a slot: rarity desc → tier desc → statsSum desc
+    const bySlot={};
+    for(const it of G.gearInventory)(bySlot[it.slot]=bySlot[it.slot]||[]).push(it);
+    for(const slot of GEAR_SLOTS){
+      const list=bySlot[slot];
+      if(!list||list.length===0)continue;
+      list.sort((a,b)=>{
+        const ra=RARITY_ORDER.indexOf(a.rarity),rb=RARITY_ORDER.indexOf(b.rarity);
+        if(rb!==ra)return rb-ra;
+        if(b.tier!==a.tier)return b.tier-a.tier;
+        return statsSum(b)-statsSum(a);
+      });
+      const key='inv:'+slot;
+      const collapsed=G.uiCollapsed[key]!==false; // default collapsed
+      const eq=G.gear[slot];
+      const eqLabel=eq?`equipped: ${gearLabel(eq)} (T${eq.tier} ${RARITIES[eq.rarity].label})`:'no item equipped';
+      inv+=`<li class="el-group">
+        <div class="el-group-header" data-toggle-inv="${slot}">
+          <span style="color:var(--hi);font-weight:700;text-transform:capitalize">${slot}</span>
+          <span class="count">${list.length} item${list.length>1?'s':''} · ${eqLabel}</span>
+          <span class="toggle">${collapsed?'+':'−'}</span>
         </div>
-        <div class="actions">
-          <button data-equip-id="${item.id}">Equip</button>
-          ${item.sockets.length>0?`<button data-sock-id="${item.id}">Socket</button>`:''}
-          <button data-sell-id="${item.id}" class="warn" title="${fmtG(sellPrice)}">Sell</button>
-          <button data-salv-id="${item.id}" class="danger">Salvage</button>
-        </div>
+        ${collapsed?'':`<ul class="el-group-body" style="list-style:none;margin:0;padding:4px 8px">${list.map(invItemHTML).join('')}</ul>`}
       </li>`;
     }
+  } else {
+    inv=sortGear(G.gearInventory,sortMode).map(invItemHTML).join('');
   }
   $('inventory-list').innerHTML=inv;
+  $('inventory-list').querySelectorAll('[data-toggle-inv]').forEach(h=>{
+    h.onclick=()=>{
+      const k='inv:'+h.dataset.toggleInv;
+      G.uiCollapsed[k]=G.uiCollapsed[k]===false?true:false;
+      renderGear();
+    };
+  });
   $('inventory-list').querySelectorAll('button').forEach(b=>{
     if(b.dataset.equipId)b.onclick=()=>{equipFromInventory(b.dataset.equipId);renderGear();renderHero();renderTop();};
     if(b.dataset.sellId)b.onclick=()=>{sellGear(b.dataset.sellId);renderGear();renderTop();};
@@ -3903,14 +4027,21 @@ function renderGear(){
     };
   });
 }
+// Manor categories — grouping by purpose so the tab reads at a glance.
+// Building IDs are stable, so a static map is the simplest mapping.
+const MANOR_CATEGORIES=[
+  {id:'combat',name:'Combat & Defense',ids:['spellfoci','astrolabe','sanctum']},
+  {id:'mana',  name:'Mana',            ids:['garden','aetherwell']},
+  {id:'wealth',name:'Wealth & Knowledge',ids:['vault','forgeyard','library','observatory']},
+  {id:'utility',name:'Utility',        ids:['pylon','cartograph']},
+];
 function renderManor(){
   if(!isManorUnlocked()){
     $('manor-lock').textContent=`unlocks at Initiate (lvl ${RANKS[1].lvl})`;
     $('buildings').innerHTML=`<div class="sub">Sealed until Initiate rank.</div>`;return;
   }
   $('manor-lock').textContent='';
-  let html='';
-  for(const b of BUILDINGS){
+  function bldRow(b){
     const lv=G.buildings[b.id];
     const cost=buildingCost(b);
     const can=G.gold>=cost&&lv<b.max;
@@ -3926,7 +4057,7 @@ function renderManor(){
     if(b.type==='spellDmg')yn=`+${(2*lv)}% spell dmg`;
     if(b.type==='crit')yn=`+${lv}% crit`;
     if(b.type==='ritualMul')yn=`+${(8*lv)}% ritual yield`;
-    html+=`<div class="building-row">
+    return `<div class="building-row">
       <div>
         <div class="nm">${b.name} <span class="lvl">lv ${lv}/${b.max}</span></div>
         <div class="desc">${b.desc}</div>
@@ -3935,8 +4066,36 @@ function renderManor(){
       <div><button class="act" data-bld="${b.id}" ${can?'':'disabled'}>${lv>=b.max?'MAX':fmtG(cost)}</button></div>
     </div>`;
   }
+  let html='';
+  for(const cat of MANOR_CATEGORIES){
+    const builds=cat.ids.map(id=>BUILDINGS.find(b=>b.id===id)).filter(Boolean);
+    if(builds.length===0)continue;
+    const key='manor:'+cat.id;
+    const collapsed=G.uiCollapsed[key]!==false; // default collapsed
+    const owned=builds.reduce((s,b)=>s+(G.buildings[b.id]||0),0);
+    const cap=builds.reduce((s,b)=>s+b.max,0);
+    html+=`<div class="el-group">
+      <div class="el-group-header" data-toggle-manor="${cat.id}">
+        <span style="color:var(--hi);font-weight:700">${cat.name}</span>
+        <span class="count">${builds.length} buildings · ${owned}/${cap} levels</span>
+        <span class="toggle">${collapsed?'+':'−'}</span>
+      </div>`;
+    if(!collapsed){
+      html+=`<div class="el-group-body">`;
+      for(const b of builds)html+=bldRow(b);
+      html+=`</div>`;
+    }
+    html+=`</div>`;
+  }
   $('buildings').innerHTML=html;
-  $('buildings').querySelectorAll('button').forEach(b=>{
+  $('buildings').querySelectorAll('[data-toggle-manor]').forEach(h=>{
+    h.onclick=()=>{
+      const k='manor:'+h.dataset.toggleManor;
+      G.uiCollapsed[k]=G.uiCollapsed[k]===false?true:false;
+      renderManor();
+    };
+  });
+  $('buildings').querySelectorAll('button[data-bld]').forEach(b=>{
     b.onclick=()=>{buyBuilding(b.dataset.bld);renderManor();renderHero();renderTop();};
   });
 }
@@ -4088,7 +4247,7 @@ function renderFamiliars(){
   if(G.familiars.length===0){
     $('familiar-list').innerHTML=`<div class="sub">No familiars yet.</div>`;
   } else {
-    $('familiar-list').innerHTML=G.familiars.map((f,i)=>{
+    function famCard(f,idx){
       const t=FAMILIAR_TYPES.find(x=>x.id===f.type);
       const mul=FAMILIAR_RARITIES[f.rarity].mul;
       const amt=t.amt*mul;
@@ -4102,15 +4261,55 @@ function renderFamiliars(){
           <div class="nm">${f.name} <span class="sub">${FAMILIAR_RARITIES[f.rarity].label} ${t.name}</span></div>
           <div class="det">${bs}</div>
         </div>
-        <button class="act danger" data-fam="${i}">Dismiss</button>
+        <button class="act danger" data-fam="${idx}">Dismiss</button>
       </div>`;
-    }).join('');
-    $('familiar-list').querySelectorAll('button').forEach(b=>{
+    }
+    // Group by rarity, descending. Pair each familiar with its original index
+    // so the dismiss button keeps pointing at the correct G.familiars slot.
+    const indexed=G.familiars.map((f,i)=>({f,i}));
+    const byRar={};
+    for(const e of indexed)(byRar[e.f.rarity]=byRar[e.f.rarity]||[]).push(e);
+    const rarOrder=[...RARITY_ORDER].reverse(); // legendary first
+    let html='';
+    for(const rar of rarOrder){
+      const list=byRar[rar];
+      if(!list||list.length===0)continue;
+      const key='fam:'+rar;
+      const collapsed=G.uiCollapsed[key]!==false; // default collapsed
+      const rarLabel=FAMILIAR_RARITIES[rar].label;
+      html+=`<div class="el-group">
+        <div class="el-group-header" data-toggle-fam="${rar}">
+          <span style="color:var(--rar-${rar});font-weight:700">${rarLabel}</span>
+          <span class="count">${list.length} bound</span>
+          <span class="toggle">${collapsed?'+':'−'}</span>
+        </div>`;
+      if(!collapsed){
+        html+=`<div class="el-group-body">${list.map(e=>famCard(e.f,e.i)).join('')}</div>`;
+      }
+      html+=`</div>`;
+    }
+    $('familiar-list').innerHTML=html;
+    $('familiar-list').querySelectorAll('[data-toggle-fam]').forEach(h=>{
+      h.onclick=()=>{
+        const k='fam:'+h.dataset.toggleFam;
+        G.uiCollapsed[k]=G.uiCollapsed[k]===false?true:false;
+        renderFamiliars();
+      };
+    });
+    $('familiar-list').querySelectorAll('button[data-fam]').forEach(b=>{
       b.onclick=()=>{dismissFamiliar(parseInt(b.dataset.fam));renderFamiliars();renderHero();renderTop();};
     });
   }
 }
 
+// Research categories — by stat family. Order = display order.
+const RESEARCH_CATEGORIES=[
+  {id:'combat', name:'Combat',   ids:['r_atk1','r_atk2','r_atk3','r_dmg1','r_crit1','r_blood']},
+  {id:'defense',name:'Defense',  ids:['r_def1']},
+  {id:'mana',   name:'Mana',     ids:['r_mana1','r_mana2']},
+  {id:'wealth', name:'Wealth & XP',ids:['r_gold1','r_xp1']},
+  {id:'utility',name:'Utility',  ids:['r_chest','r_dungeon']},
+];
 function renderResearch(){
   if(!isResearchUnlocked()){
     $('research-lock').textContent=`unlocks at Sorcerer (lvl ${RANKS[3].lvl})`;
@@ -4131,8 +4330,7 @@ function renderResearch(){
   } else {
     $('research-active-wrap').innerHTML=`<div class="sub" style="margin-bottom:6px">${isAutoResearch()?'Auto-research idle (no affordable project).':'No research active.'}</div>`;
   }
-  let html='';
-  for(const r of RESEARCH_PROJECTS){
+  function projItem(r){
     const done=!!G.researchCompleted[r.id];
     const can=!done&&!G.researchActive&&G.gold>=r.cost;
     const bonusStr=Object.entries(r.bonus).map(([k,v])=>{
@@ -4140,7 +4338,7 @@ function renderResearch(){
       if(k==='dungeonChance')return `+${(v*100).toFixed(0)}% dungeon chance`;
       return `+${v} ${k}`;
     }).join(' · ');
-    html+=`<li>
+    return `<li>
       <div>
         <div class="name">${r.name}</div>
         <div class="desc">${bonusStr} · ${fmtTime(r.time)}</div>
@@ -4148,8 +4346,34 @@ function renderResearch(){
       <button data-res="${r.id}" ${can?'':'disabled'}>${done?'DONE':fmtG(r.cost)}</button>
     </li>`;
   }
+  let html='';
+  for(const cat of RESEARCH_CATEGORIES){
+    const projs=cat.ids.map(id=>RESEARCH_PROJECTS.find(r=>r.id===id)).filter(Boolean);
+    if(projs.length===0)continue;
+    const doneCount=projs.filter(r=>G.researchCompleted[r.id]).length;
+    const allDone=doneCount===projs.length;
+    const key='research:'+cat.id;
+    const collapsed=G.uiCollapsed[key]!==false; // default collapsed
+    html+=`<div class="el-group ${allDone?'locked':''}">
+      <div class="el-group-header" data-toggle-research="${cat.id}">
+        <span style="color:var(--hi);font-weight:700">${cat.name}</span>
+        <span class="count">${doneCount}/${projs.length} researched</span>
+        <span class="toggle">${allDone?'✓':collapsed?'+':'−'}</span>
+      </div>`;
+    if(!collapsed){
+      html+=`<ul class="el-group-body" style="list-style:none;margin:0;padding:4px 8px">${projs.map(projItem).join('')}</ul>`;
+    }
+    html+=`</div>`;
+  }
   $('research-list').innerHTML=html;
-  $('research-list').querySelectorAll('button').forEach(b=>{
+  $('research-list').querySelectorAll('[data-toggle-research]').forEach(h=>{
+    h.onclick=()=>{
+      const k='research:'+h.dataset.toggleResearch;
+      G.uiCollapsed[k]=G.uiCollapsed[k]===false?true:false;
+      renderResearch();
+    };
+  });
+  $('research-list').querySelectorAll('button[data-res]').forEach(b=>{
     b.onclick=()=>{startResearch(b.dataset.res);renderResearch();renderTop();};
   });
 }
@@ -4297,6 +4521,25 @@ function renderCrusade(){
   });
 }
 
+// Awakening node categories — split tier-0 nodes between Stat Upgrades and
+// Permanent Unlocks (the "keep on awaken" + start-level nodes), then bucket
+// the rest by their tier-req gate.
+function awakeningCategoryOf(n){
+  if(n.tierReq>=7)return 'tier7';
+  if(n.tierReq>=5)return 'tier5';
+  if(n.tierReq>=3)return 'tier3';
+  // tier-0 nodes — split by whether they're a one-time perma-unlock
+  const permaKeys=['startLvl','keepSpells','keepFamiliars','keepResearch','keepGear'];
+  if(Object.keys(n.bonus||{}).some(k=>permaKeys.includes(k)))return 'unlocks';
+  return 'stats';
+}
+const AWAKENING_CATEGORIES=[
+  {id:'stats',  name:'Stat Upgrades',     tierReq:0},
+  {id:'unlocks',name:'Permanent Unlocks', tierReq:0},
+  {id:'tier3',  name:'Tier 3+ Nodes',     tierReq:3},
+  {id:'tier5',  name:'Tier 5+ Nodes',     tierReq:5},
+  {id:'tier7',  name:'Tier 7+ Nodes',     tierReq:7},
+];
 function renderAwaken(){
   const d=awakenDifficulty();
   const previewS=previewSpark();
@@ -4309,13 +4552,12 @@ function renderAwaken(){
   </div>
   <div class="sub" style="margin-bottom:8px">Spark earned only by Awakening. No penalty for awakening early — but more levels and deeper zones grant more spark per cycle. Each Awakening also hardens enemies and grows rewards.</div>`;
   if($('btn-do-awaken'))$('btn-do-awaken').onclick=()=>{awaken();renderAll();};
-  let html='';
-  for(const n of AWAKENING_NODES){
+  function nodeCard(n){
     const owned=!!G.awakening[n.id];
     const tierLocked=(n.tierReq||0)>d.tier;
     const can=!owned&&!tierLocked&&G.spark>=n.cost;
     const tierTag=n.tierReq?`<span class="sub" style="color:var(--hi)"> · Tier ${n.tierReq}+</span>`:'';
-    html+=`<div class="awaken-card ${owned?'owned':''}" style="${tierLocked?'opacity:0.45':''}">
+    return `<div class="awaken-card ${owned?'owned':''}" style="${tierLocked?'opacity:0.45':''}">
       <div>
         <div class="nm">${n.name}${tierTag}</div>
         <div class="desc">${n.desc}</div>
@@ -4323,7 +4565,41 @@ function renderAwaken(){
       <button class="act" data-aw="${n.id}" ${can?'':'disabled'}>${owned?'OWNED':tierLocked?'LOCKED':fmt(n.cost)+' ✦'}</button>
     </div>`;
   }
+  const buckets={};
+  for(const n of AWAKENING_NODES){
+    const c=awakeningCategoryOf(n);
+    (buckets[c]=buckets[c]||[]).push(n);
+  }
+  let html='';
+  for(const cat of AWAKENING_CATEGORIES){
+    const list=buckets[cat.id];
+    if(!list||list.length===0)continue;
+    const ownedCount=list.filter(n=>G.awakening[n.id]).length;
+    const tierLocked=cat.tierReq>d.tier;
+    const key='awaken:'+cat.id;
+    // Tier-locked categories default collapsed; available ones default open
+    // for the most common interaction (buy stat upgrades after each awaken).
+    const defaultOpen=!tierLocked&&cat.id==='stats';
+    const collapsed=defaultOpen?G.uiCollapsed[key]===true:G.uiCollapsed[key]!==false;
+    html+=`<div class="el-group ${tierLocked?'locked':''}">
+      <div class="el-group-header" data-toggle-awaken="${cat.id}">
+        <span style="color:var(--hi);font-weight:700">${cat.name}</span>
+        <span class="count">${ownedCount}/${list.length} owned${tierLocked?` · need Tier ${cat.tierReq}`:''}</span>
+        <span class="toggle">${collapsed?'+':'−'}</span>
+      </div>`;
+    if(!collapsed){
+      html+=`<div class="el-group-body">${list.map(nodeCard).join('')}</div>`;
+    }
+    html+=`</div>`;
+  }
   $('awaken-list').innerHTML=html;
+  $('awaken-list').querySelectorAll('[data-toggle-awaken]').forEach(h=>{
+    h.onclick=()=>{
+      const k='awaken:'+h.dataset.toggleAwaken;
+      G.uiCollapsed[k]=G.uiCollapsed[k]===false?true:false;
+      renderAwaken();
+    };
+  });
   $('awaken-list').querySelectorAll('button[data-aw]').forEach(b=>{
     b.onclick=()=>{buyAwakening(b.dataset.aw);renderAwaken();renderTop();renderHero();};
   });
@@ -4445,6 +4721,32 @@ function bindEvents(){
     }
   });
   mapEl.addEventListener('mouseleave',()=>{tipEl.style.display='none';});
+  // Inventory hover tooltip — same pattern as the map tooltip, but compares
+  // each unequipped item against whatever's currently in that slot. Bound
+  // once on #inventory-list (preserved across innerHTML rebuilds via event
+  // delegation through data-cmp-id).
+  const gearTipEl=document.createElement('div');
+  gearTipEl.className='gear-tip';
+  gearTipEl.style.display='none';
+  document.body.appendChild(gearTipEl);
+  const invEl=$('inventory-list');
+  invEl.addEventListener('mouseover',e=>{
+    const li=e.target.closest('[data-cmp-id]');
+    if(!li){gearTipEl.style.display='none';return;}
+    const item=G.gearInventory.find(x=>x.id===li.dataset.cmpId);
+    if(!item){gearTipEl.style.display='none';return;}
+    gearTipEl.textContent=gearCompareText(item);
+    gearTipEl.style.display='block';
+  });
+  invEl.addEventListener('mousemove',e=>{
+    if(gearTipEl.style.display==='block'){
+      const x=Math.min(e.clientX+14,window.innerWidth-gearTipEl.offsetWidth-8);
+      const y=Math.min(e.clientY+14,window.innerHeight-gearTipEl.offsetHeight-8);
+      gearTipEl.style.left=x+'px';
+      gearTipEl.style.top=y+'px';
+    }
+  });
+  invEl.addEventListener('mouseleave',()=>{gearTipEl.style.display='none';});
   document.querySelectorAll('.tab-btn').forEach(b=>{
     b.onclick=()=>{
       document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
