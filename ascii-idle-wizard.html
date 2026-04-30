@@ -1036,11 +1036,29 @@ const TRIAL_PALETTE={ground:'.',wall:'═',deco:'∙'};
 
 // Trial upgrades — bought with Essence; persistent across Awakening
 const TRIAL_UPGRADES=[
-  {id:'tu_gem',   name:'Gemstone Acumen',  desc:'+2% gem drop chance / lv', cost:5,  costMul:1.45, max:25, type:'gemDropMul'},
-  {id:'tu_mana',  name:'Essence Battery',  desc:'+0.5 mana regen / lv',     cost:8,  costMul:1.50, max:20, type:'manaRegenAdd'},
-  {id:'tu_reward',name:'Trial Charm',      desc:'+5% combat rewards / lv',  cost:10, costMul:1.50, max:30, type:'rewardMul'},
-  {id:'tu_chest', name:'Chest Mastery',    desc:'+1 chest / 2 lv',          cost:25, costMul:1.55, max:10, type:'chestSpawnAdd'},
-  {id:'tu_slot',  name:'Tower Mastery',    desc:'+1 max spell slot (unique)', cost:200, costMul:1, max:1, type:'spellSlotAdd'},
+  {id:'tu_gem',    name:'Gemstone Acumen',  desc:'+2% gem drop chance / lv',           cost:5,   costMul:1.45, max:25, type:'gemDropMul'},
+  {id:'tu_mana',   name:'Essence Battery',  desc:'+0.5 mana regen / lv',               cost:8,   costMul:1.50, max:20, type:'manaRegenAdd'},
+  {id:'tu_reward', name:'Trial Charm',      desc:'+5% combat rewards / lv',            cost:10,  costMul:1.50, max:30, type:'rewardMul'},
+  {id:'tu_chest',  name:'Chest Mastery',    desc:'+1 chest / 2 lv',                    cost:25,  costMul:1.55, max:10, type:'chestSpawnAdd'},
+  // Trial-loop expansion
+  {id:'tu_essence',name:'Reverberation',    desc:'+5% essence yield / lv',             cost:20,  costMul:1.45, max:20, type:'essenceMul'},
+  {id:'tu_echo',   name:'Echo Reservoir',   desc:'+1 essence on every trial boss / lv',cost:30,  costMul:1.50, max:10, type:'essenceFlat'},
+  {id:'tu_forge',  name:'Ascendant Forge',  desc:'+1 trial-gear rarity bump / lv',     cost:60,  costMul:2.00, max:2,  type:'trialGearBonus'},
+  {id:'tu_skip',   name:'Pinnacle Mastery', desc:'Start trials at 20% of best floor / lv', cost:80, costMul:1.60, max:5, type:'trialStartFrac'},
+  {id:'tu_slot',   name:'Tower Mastery',    desc:'+1 max spell slot (unique)',         cost:200, costMul:1,    max:1,  type:'spellSlotAdd'},
+];
+
+// Trial milestones — one-time best-floor rewards. checkTrialMilestone() runs
+// on every NEW best floor; entries with floor<=newBest that haven't been
+// claimed yet (G.trial.milestonesAwarded[floor]) get paid out and marked.
+const TRIAL_MILESTONES=[
+  {floor:5,   essence:5,    flavor:'Foothold',    grant:{maps:1}},
+  {floor:10,  essence:15,   flavor:'Resonance',   grant:{gemLvls:[1]}},
+  {floor:25,  essence:50,   flavor:'Ascendance',  grant:{dust:50, gear:[{rarity:'rare'}]}},
+  {floor:50,  essence:150,  flavor:'Convergence', grant:{gemLvls:[2], gear:[{rarity:'epic'}]}},
+  {floor:100, essence:500,  flavor:'Apotheosis',  grant:{maps:5, gemLvls:[3], gear:[{rarity:'legendary'}]}},
+  {floor:200, essence:2000, flavor:'Pinnacle',    grant:{crystal:500, gemLvls:[4], gear:[{rarity:'legendary'},{rarity:'legendary'}]}},
+  {floor:500, essence:10000,flavor:'Beyond',      grant:{maps:10, gem_mat:50, gemLvls:[5,5], gear:[{rarity:'legendary'},{rarity:'legendary'},{rarity:'legendary'}]}},
 ];
 
 // ============================================================
@@ -1428,7 +1446,7 @@ const G={
   legendariesCrafted:{}, // id -> true
   crusade:{active:null},
   ritual:{active:false,intensity:1},
-  trial:{inTrial:false,floor:1,bestFloor:0,essence:0,totalEssence:0,upgrades:{},trialReturn:null},
+  trial:{inTrial:false,floor:1,bestFloor:0,essence:0,totalEssence:0,upgrades:{},trialReturn:null,milestonesAwarded:{}},
   theme:'dark',
   uiCollapsed:{}, // ui-only, per-element collapse state for Elements page
   uiInvSort:'rarity', // gear inventory sort mode: rarity | alpha | strength
@@ -2210,10 +2228,87 @@ function genTrial(palette){
     if(m[y][x]===palette.ground&&Math.random()<0.05)m[y][x]=palette.deco;
   return m;
 }
+// Floor → gear tier mapping for trial drops. Uses the same 0-5 scale as zone
+// gear so genGear() / RARITIES tables work without changes.
+function trialGearTier(floor){
+  if(floor>=81)return 5;
+  if(floor>=51)return 4;
+  if(floor>=31)return 3;
+  if(floor>=16)return 2;
+  if(floor>=6) return 1;
+  return 0;
+}
+// Per-floor material bundle dropped by every trial boss. Dust scales aggressively
+// (the cheap material), crystal kicks in at F5+, gem at F15+. Tuned so a F50
+// climb yields meaningful crafting / forging income beyond just essence.
+function awardTrialMaterials(floor){
+  const dust=20+Math.floor(floor*5+Math.pow(floor,1.15));
+  G.materials.dust+=dust;
+  let crystal=0,gem=0;
+  if(floor>=5){
+    crystal=2+Math.floor(floor*0.4+Math.pow(floor,0.8));
+    G.materials.crystal+=crystal;
+  }
+  if(floor>=15){
+    gem=Math.max(1,Math.floor(floor/15));
+    G.materials.gem+=gem;
+  }
+  const parts=[`+${dust} dust`];
+  if(crystal)parts.push(`+${crystal} crystal`);
+  if(gem)parts.push(`+${gem} gem`);
+  logLine(`◇ Trial spoils: ${parts.join(' · ')}`,'loot');
+}
+// Award any milestones the player has just qualified for. Idempotent — each
+// milestone floor only ever pays out once thanks to G.trial.milestonesAwarded.
+function checkTrialMilestone(newBestFloor){
+  for(const m of TRIAL_MILESTONES){
+    if(newBestFloor<m.floor)continue;
+    if(G.trial.milestonesAwarded[m.floor])continue;
+    G.trial.milestonesAwarded[m.floor]=true;
+    G.trial.essence+=m.essence;
+    G.trial.totalEssence+=m.essence;
+    const lines=[`★ Milestone — Floor ${m.floor} (${m.flavor}): +${m.essence}◆ Essence`];
+    const g=m.grant||{};
+    if(g.dust){G.materials.dust+=g.dust;lines.push(`  +${g.dust} dust`);}
+    if(g.crystal){G.materials.crystal+=g.crystal;lines.push(`  +${g.crystal} crystal`);}
+    if(g.gem_mat){G.materials.gem+=g.gem_mat;lines.push(`  +${g.gem_mat} gem`);}
+    if(g.maps){G.treasureMaps+=g.maps;lines.push(`  +${g.maps} treasure map${g.maps>1?'s':''}`);}
+    if(g.gemLvls){
+      for(const lvl of g.gemLvls){
+        const t=pick(GEM_TYPES);
+        const id=gemId(t.id,lvl);
+        G.gemInventory[id]=(G.gemInventory[id]||0)+1;
+        lines.push(`  +1 ${t.name} L${lvl} gem`);
+      }
+    }
+    if(g.gear){
+      for(const spec of g.gear){
+        const tier=trialGearTier(newBestFloor);
+        const slot=pick(GEAR_SLOTS);
+        const item=genGear(slot,tier,spec.rarity);
+        G.gearInventory.push(item);
+        lines.push(`  +${item.name} [${RARITIES[spec.rarity].label}]`);
+      }
+    }
+    for(const ln of lines)logLine(ln,'legendary');
+  }
+}
 function enterTrial(){
   if(!isTrialUnlocked()){logLine('Trials sealed until Sorcerer.','sys');return;}
   if(G.inDungeon||G.trial.inTrial)return;
   if(G.bossActive||G.enemy){logLine('Cannot enter Trials mid-combat.','sys');return;}
+  // Pinnacle Mastery — fast-forward to a fraction of bestFloor on a FRESH
+  // climb (floor==1, post-Awakening) so an endgame player doesn't have to
+  // re-grind floors 1-50 every prestige cycle. If you exited mid-run, your
+  // saved floor is preserved untouched and the skip doesn't apply.
+  const skip=G.trial.upgrades.tu_skip||0;
+  if(skip>0&&G.trial.floor===1&&G.trial.bestFloor>=5){
+    const target=Math.max(1,Math.min(G.trial.bestFloor,Math.floor(G.trial.bestFloor*0.20*skip)));
+    if(target>1){
+      G.trial.floor=target;
+      logLine(`▲ Pinnacle Mastery: starting at floor ${target}.`,'rank');
+    }
+  }
   G.trial.inTrial=true;
   G.trial.trialReturn={zoneIdx:G.zoneIdx,kills:G.kills};
   logLine(`▲ Climbing the Pinnacle. Floor ${G.trial.floor} (Tier ${G.awakenCount}).`,'rank');
@@ -2242,13 +2337,26 @@ function spawnTrialBoss(){
 }
 function onTrialBossKilled(){
   const f=G.trial.floor;
+  const u=G.trial.upgrades;
+  // Base essence: 1, +1 every 5th floor, +2 every 10th floor.
   let essence=1;
   if(f%5===0)essence+=1;
   if(f%10===0)essence+=2;
+  // Echo Reservoir: flat +1 per lv on every trial boss kill.
+  essence+=u.tu_echo||0;
+  // Reverberation: +5% per lv, applied last so the bonus flows through Echo too.
+  essence=Math.ceil(essence*(1+0.05*(u.tu_essence||0)));
   G.trial.essence+=essence;
   G.trial.totalEssence+=essence;
-  if(f>G.trial.bestFloor)G.trial.bestFloor=f;
-  logLine(`▲ Floor ${f} cleared! +${essence} ◆ Essence (${G.trial.essence} held).`,'rank');
+  // Floor-scaled material bundle — replaces the weak zoneIdx-based dust drop
+  // that fired in onEnemyDead with something that actually scales with depth.
+  awardTrialMaterials(f);
+  // Best-floor tracking + milestone payout (idempotent per floor).
+  if(f>G.trial.bestFloor){
+    G.trial.bestFloor=f;
+    checkTrialMilestone(f);
+  }
+  logLine(`▲ Floor ${f} cleared! +${essence}◆ Essence (${G.trial.essence} held).`,'rank');
   G.trial.floor++;
   if(G.trial.inTrial){
     setTimeout(()=>{if(G.trial.inTrial)spawnTrialBoss();},600);
@@ -2497,6 +2605,18 @@ function castSpell(sp,target){
 // ============================================================
 function rollGearDrop(e){
   if(e.isBoss){
+    if(G.trial.inTrial){
+      // Trial boss drop — tier scales with floor, not zoneIdx. Ascendant Forge
+      // adds +1 rarity bump per lv on top of the standard boss +2. Materials
+      // and treasure maps are awarded by awardTrialMaterials/checkTrialMilestone
+      // so we don't double-dip them here.
+      const tier=trialGearTier(G.trial.floor);
+      const ascForge=G.trial.upgrades.tu_forge||0;
+      const item=rollGearForZone(tier,2+ascForge);
+      G.gearInventory.push(item);
+      logLine(`✦✦ Trial drop: ${item.name} [${RARITIES[item.rarity].label}]`,'rank');
+      return;
+    }
     const item=rollGearForZone(G.zoneIdx,2); // boss: +2 rarity bumps
     G.gearInventory.push(item);
     logLine(`✦✦ Boss drop: ${item.name} [${RARITIES[item.rarity].label}]`,'rank');
@@ -3212,6 +3332,7 @@ function exportSave(){
       essence:G.trial.essence,
       totalEssence:G.trial.totalEssence,
       upgrades:G.trial.upgrades,
+      milestonesAwarded:G.trial.milestonesAwarded,
     },
     autoExplore:G.autoExplore,
     theme:G.theme,
@@ -3274,7 +3395,16 @@ function importSave(str){
       totalEssence:d.trial?.totalEssence||0,
       upgrades:d.trial?.upgrades||{},
       trialReturn:null,
+      milestonesAwarded:d.trial?.milestonesAwarded||{},
     };
+    // Back-fill milestones for legacy saves where bestFloor was already past
+    // a milestone tier — players shouldn't be punished for the late-add by
+    // having to re-climb. Marks them claimed (no retroactive payout).
+    for(const m of TRIAL_MILESTONES){
+      if(G.trial.bestFloor>=m.floor&&G.trial.milestonesAwarded[m.floor]===undefined){
+        G.trial.milestonesAwarded[m.floor]=true;
+      }
+    }
     G.autoExplore=d.autoExplore!==false;
     G.eclipseSeen=!!d.eclipseSeen;
     G.uiInvSort=d.uiInvSort||'rarity';
@@ -4391,18 +4521,68 @@ function renderTrial(){
   const scaledGold=Math.ceil(ref.gold*d.reward);
   const scaledXp=Math.ceil(ref.xp*d.reward);
   const stateLabel=G.trial.inTrial?'<b style="color:var(--gold)">CLIMBING</b>':'idle';
+  // Per-floor reward preview for the boss the player is about to fight.
+  const u=G.trial.upgrades;
+  const f=G.trial.floor;
+  let baseEss=1+(f%5===0?1:0)+(f%10===0?2:0)+(u.tu_echo||0);
+  baseEss=Math.ceil(baseEss*(1+0.05*(u.tu_essence||0)));
+  const previewTier=trialGearTier(f);
+  const previewBumps=2+(u.tu_forge||0);
+  // Next unclaimed milestone
+  const nextMs=TRIAL_MILESTONES.find(m=>!G.trial.milestonesAwarded[m.floor]);
   let html=`<div class="crusade">
     <div class="nm">${stateLabel}</div>
     <div class="sub">Current floor: <b style="color:var(--gold)">${G.trial.floor}</b> · Best: <b>${G.trial.bestFloor}</b> · Essence: <b style="color:var(--mat-gem)">${G.trial.essence}◆</b> <span class="sub">(lifetime ${G.trial.totalEssence})</span></div>
     <div class="sub">Awakening Tier: <b>${d.tier}</b> · enemies ×${d.enemyHp.toFixed(2)} hp / ×${d.enemyAtk.toFixed(2)} atk · rewards ×${d.reward.toFixed(2)}</div>
-    <div class="sub">Next boss: <b>${ref.name}</b> · <span class="el ${ref.el}">${EL_INFO[ref.el].glyph} ${EL_INFO[ref.el].name}</span> · HP <b>${fmt(scaledHp)}</b> · ATK <b>${scaledAtk}</b> · drops ${fmtG(scaledGold)}, ${fmt(scaledXp)}xp${ref.tags.includes('undead')?' · undead':''}</div>
+    <div class="sub">Next boss: <b>${ref.name}</b> · <span class="el ${ref.el}">${EL_INFO[ref.el].glyph} ${EL_INFO[ref.el].name}</span> · HP <b>${fmt(scaledHp)}</b> · ATK <b>${scaledAtk}</b>${ref.tags.includes('undead')?' · undead':''}</div>
+    <div class="sub">On clear: ${fmtG(scaledGold)} · ${fmt(scaledXp)}xp · <b style="color:var(--mat-gem)">+${baseEss}◆</b> · floor-scaled materials · T${previewTier} gear (boss +${previewBumps} rarity)</div>
+    ${nextMs?`<div class="sub">Next milestone: <b style="color:var(--rar-legendary)">★ Floor ${nextMs.floor} · ${nextMs.flavor}</b> — +${nextMs.essence}◆${nextMs.grant.gear?` · ${nextMs.grant.gear.length}× ${RARITIES[nextMs.grant.gear[0].rarity].label} gear`:''}${nextMs.grant.gemLvls?` · gems`:''}${nextMs.grant.maps?` · maps`:''}</div>`:'<div class="sub">All milestones claimed. ★</div>'}
     <div class="row" style="margin-top:6px">
       ${G.trial.inTrial
         ? '<button class="act danger" id="btn-exit-trial">Exit Trials</button>'
         : '<button class="act warn" id="btn-enter-trial">Enter Trials</button>'}
     </div>
   </div>`;
-  $('trial-status').innerHTML=html;
+  // Milestone roster — collapsible mini panel showing every tier and its
+  // claimed/unclaimed state. Helps players see what they're climbing toward.
+  const msKey='trialMilestones';
+  const msCollapsed=G.uiCollapsed[msKey]!==false;
+  let msHtml=`<div class="el-group" style="margin-top:6px">
+    <div class="el-group-header" data-toggle-trial-ms>
+      <span style="color:var(--hi);font-weight:700">Milestone Roster</span>
+      <span class="count">${Object.keys(G.trial.milestonesAwarded).length}/${TRIAL_MILESTONES.length} claimed</span>
+      <span class="toggle">${msCollapsed?'+':'−'}</span>
+    </div>`;
+  if(!msCollapsed){
+    msHtml+=`<div class="el-group-body">`;
+    for(const m of TRIAL_MILESTONES){
+      const claimed=!!G.trial.milestonesAwarded[m.floor];
+      const reach=G.trial.bestFloor>=m.floor;
+      const parts=[`+${m.essence}◆`];
+      const g=m.grant||{};
+      if(g.gear)parts.push(`${g.gear.length}× ${RARITIES[g.gear[0].rarity].label} gear`);
+      if(g.gemLvls)parts.push(`${g.gemLvls.length}× L${g.gemLvls[0]} gem`);
+      if(g.maps)parts.push(`${g.maps} maps`);
+      if(g.dust)parts.push(`${g.dust} dust`);
+      if(g.crystal)parts.push(`${g.crystal} crystal`);
+      if(g.gem_mat)parts.push(`${g.gem_mat} gem mat`);
+      msHtml+=`<div class="building-row" style="opacity:${claimed?0.55:reach?1:0.85}">
+        <div>
+          <div class="nm">★ Floor ${m.floor} <span class="sub">${m.flavor}</span></div>
+          <div class="desc">${parts.join(' · ')}</div>
+        </div>
+        <div class="yield" style="color:var(--${claimed?'hi2':reach?'gold':'dim'})">${claimed?'CLAIMED':reach?'READY':'locked'}</div>
+      </div>`;
+    }
+    msHtml+=`</div>`;
+  }
+  msHtml+=`</div>`;
+  $('trial-status').innerHTML=html+msHtml;
+  const tmH=document.querySelector('[data-toggle-trial-ms]');
+  if(tmH)tmH.onclick=()=>{
+    G.uiCollapsed[msKey]=G.uiCollapsed[msKey]===false?true:false;
+    renderTrial();
+  };
   if($('btn-enter-trial'))$('btn-enter-trial').onclick=()=>{enterTrial();renderAll();};
   if($('btn-exit-trial'))$('btn-exit-trial').onclick=()=>{exitTrial('exited');renderAll();};
 
