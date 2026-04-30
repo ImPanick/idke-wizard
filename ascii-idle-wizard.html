@@ -3156,9 +3156,30 @@ function applyIdle(seconds){
 // ============================================================
 // SAVE / LOAD
 // ============================================================
-// Unicode-safe base64 — btoa/atob choke on chars > U+00FF (element glyphs etc)
-function utf8ToB64(s){return btoa(unescape(encodeURIComponent(s)));}
-function b64ToUtf8(s){return decodeURIComponent(escape(atob(s)));}
+// Unicode-safe base64. btoa/atob only accept Latin-1 (≤U+00FF), so we go
+// through UTF-8 bytes explicitly. The old escape/unescape trick is deprecated
+// (Annex B), mishandles surrogate pairs, and the decode side throws URIError
+// on some inputs — that's the "works on most devices, breaks on a few" bug.
+// Decode also strips whitespace (clipboards line-wrap), accepts URL-safe
+// alphabet (-/_), and re-pads if the trailing '=' was trimmed.
+function utf8ToB64(s){
+  const bytes=new TextEncoder().encode(s);
+  let bin='';
+  // chunked to keep String.fromCharCode arg list small on older engines
+  const CHUNK=0x8000;
+  for(let i=0;i<bytes.length;i+=CHUNK){
+    bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+CHUNK));
+  }
+  return btoa(bin);
+}
+function b64ToUtf8(s){
+  s=String(s).replace(/\s+/g,'').replace(/-/g,'+').replace(/_/g,'/');
+  while(s.length%4)s+='=';
+  const bin=atob(s);
+  const bytes=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+  return new TextDecoder('utf-8',{fatal:false}).decode(bytes);
+}
 function exportSave(){
   const d={
     v:25,
