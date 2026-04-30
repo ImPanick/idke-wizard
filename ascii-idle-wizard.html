@@ -457,12 +457,11 @@ pre.map .trialBoss{color:var(--gold);font-weight:700}
         <h2>Inventory <span class="sub" id="inv-summary"></span></h2>
         <div id="treasure-maps-row"></div>
         <div class="row" style="margin-bottom:6px">
-          <label class="sub">sort:</label>
+          <label class="sub">sort within slot:</label>
           <select class="act" id="inv-sort">
             <option value="rarity">Rarity (high → low)</option>
+            <option value="strength">Power (best first)</option>
             <option value="alpha">Name (A → Z)</option>
-            <option value="strength">Strength (best first)</option>
-            <option value="slot">Slot (grouped)</option>
           </select>
         </div>
         <ul class="shop" id="inventory-list"></ul>
@@ -3950,11 +3949,14 @@ function renderGear(){
   $('treasure-maps-row').innerHTML=tm;
   if($('btn-use-map'))$('btn-use-map').onclick=()=>{useTreasureMap();renderGear();renderTop();renderMap();};
 
-  // Inventory — flat list for rarity/alpha/strength sorts, collapsible
-  // per-slot groups when sortMode==='slot'. data-cmp-id on each <li> drives
-  // the gear-comparison hover tooltip wired up in bindEvents().
+  // Inventory — always grouped by slot (the primary category). The sort
+  // dropdown controls ordering WITHIN each slot. Container .shop has
+  // max-height:520px;overflow-y:auto so the list never hyper-extends the
+  // page. data-cmp-id on each <li> drives the hover comparison tooltip
+  // wired up in bindEvents().
   $('inv-summary').textContent=`${G.gearInventory.length} items`;
-  const sortMode=G.uiInvSort||'rarity';
+  const VALID_INV_SORTS=['rarity','strength','alpha'];
+  const sortMode=VALID_INV_SORTS.includes(G.uiInvSort)?G.uiInvSort:'rarity';
   if($('inv-sort'))$('inv-sort').value=sortMode;
   function invItemHTML(item){
     const r=RARITIES[item.rarity];
@@ -3963,7 +3965,7 @@ function renderGear(){
     if(item.legendary&&item.legendaryEffect)extra=`<div style="color:var(--rar-legendary);font-size:11px;margin-top:2px">${item.legendaryEffect}</div>`;
     return `<li class="inv-item r-${r.color.replace('rar-','')}" data-cmp-id="${item.id}">
       <div>
-        <div><span class="nm">${gearLabel(item)}</span> <span class="sub">${item.slot} · T${item.tier} ${r.label}${item.sockets.length?` · ${item.sockets.length} socket${item.sockets.length>1?'s':''}`:''}</span></div>
+        <div><span class="nm">${gearLabel(item)}</span> <span class="sub">T${item.tier} ${r.label}${item.sockets.length?` · ${item.sockets.length} socket${item.sockets.length>1?'s':''}`:''}</span></div>
         <div class="desc">${statsLine(item.stats)}</div>
         ${extra}
         ${item.sockets.length>0?gemDescHTML(item):''}
@@ -3978,35 +3980,31 @@ function renderGear(){
   }
   let inv='';
   if(G.gearInventory.length===0){
-    inv='<li><span class="sub">Empty.</span></li>';
-  } else if(sortMode==='slot'){
-    // Sub-sort within a slot: rarity desc → tier desc → statsSum desc
+    inv='<li class="inv-item"><span class="sub">Empty. Slay enemies and open chests to find gear.</span></li>';
+  } else {
     const bySlot={};
     for(const it of G.gearInventory)(bySlot[it.slot]=bySlot[it.slot]||[]).push(it);
     for(const slot of GEAR_SLOTS){
       const list=bySlot[slot];
       if(!list||list.length===0)continue;
-      list.sort((a,b)=>{
-        const ra=RARITY_ORDER.indexOf(a.rarity),rb=RARITY_ORDER.indexOf(b.rarity);
-        if(rb!==ra)return rb-ra;
-        if(b.tier!==a.tier)return b.tier-a.tier;
-        return statsSum(b)-statsSum(a);
-      });
+      const sorted=sortGear(list,sortMode);
       const key='inv:'+slot;
       const collapsed=G.uiCollapsed[key]!==false; // default collapsed
       const eq=G.gear[slot];
       const eqLabel=eq?`equipped: ${gearLabel(eq)} (T${eq.tier} ${RARITIES[eq.rarity].label})`:'no item equipped';
+      // Highest rarity in the group as a quick at-a-glance signal in the header
+      const topRarity=[...list].sort((a,b)=>RARITY_ORDER.indexOf(b.rarity)-RARITY_ORDER.indexOf(a.rarity))[0].rarity;
+      const topR=RARITIES[topRarity];
       inv+=`<li class="el-group">
         <div class="el-group-header" data-toggle-inv="${slot}">
           <span style="color:var(--hi);font-weight:700;text-transform:capitalize">${slot}</span>
+          <span style="color:var(--${topR.color});font-size:11px">best: ${topR.label}</span>
           <span class="count">${list.length} item${list.length>1?'s':''} · ${eqLabel}</span>
           <span class="toggle">${collapsed?'+':'−'}</span>
         </div>
-        ${collapsed?'':`<ul class="el-group-body" style="list-style:none;margin:0;padding:4px 8px">${list.map(invItemHTML).join('')}</ul>`}
+        ${collapsed?'':`<ul class="el-group-body" style="list-style:none;margin:0;padding:4px 8px">${sorted.map(invItemHTML).join('')}</ul>`}
       </li>`;
     }
-  } else {
-    inv=sortGear(G.gearInventory,sortMode).map(invItemHTML).join('');
   }
   $('inventory-list').innerHTML=inv;
   $('inventory-list').querySelectorAll('[data-toggle-inv]').forEach(h=>{
