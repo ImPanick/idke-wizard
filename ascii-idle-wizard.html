@@ -3137,6 +3137,14 @@ function onHeroDead(){
   G.gold-=lost;
   logLine(`You fall. -${fmtG(lost)}.`,'die');
   G.enemy=null;G.kills=Math.floor(G.kills*0.75);
+  // Death wipes the slate: buffs, ailments, and spell cooldowns all clear so
+  // afflictions don't pause through respawn. Recompute stats since the buff
+  // and ailment tables both feed into recomputeStats.
+  const hadStateMods=G.buffs.length>0||G.hero.ailments.length>0;
+  G.buffs=[];
+  G.hero.ailments=[];
+  G.spellCd={};
+  if(hadStateMods)recomputeStats();
   if(G.bossActive){G.bossActive=false;if(!G.inDungeon&&!G.trial.inTrial)spawnMobs();}
   if(G.inDungeon)exitDungeon('forfeited');
   if(G.trial.inTrial)exitTrial('failed');
