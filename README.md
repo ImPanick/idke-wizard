@@ -177,12 +177,13 @@ Tested on:
 
 ## Credits
 
-By **Joseph Jeffrey**.
+By **Joseph Jeffrey** in colloboration with Claude.
 
 ASCII art and game design by the author. Single-file architecture inspired by
 the long tradition of "one HTML, no excuses" web games — `notpron`, `Cookie
 Clicker`'s early builds, every restricted-IT-environment mage who ever opened
-View Source for entertainment.
+View Source for entertainment. This was a fun project I sat down and created
+out of boredom one day. I might make a series of "single file" games as a package.
 
 ---
 
