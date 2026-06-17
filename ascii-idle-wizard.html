@@ -190,21 +190,24 @@ pre.map .hero.ailing{color:var(--hp);text-shadow:0 0 8px var(--hp),0 0 16px var(
   from{text-shadow:0 0 4px var(--hp);filter:brightness(1.0)}
   to  {text-shadow:0 0 14px var(--hp);filter:brightness(1.4)}
 }
-/* Ailment cue layer 2 — hero panel border glows red when ailing */
+/* Ailment cue layer 2 — hero panel border glows red when ailing.
+   Box-shadow color also derives from the active theme's --hp. */
 .panel.hero-panel.ailing{border-color:var(--hp);
-                         box-shadow:0 0 0 1px var(--hp),0 0 14px rgba(216,99,106,0.45);
+                         box-shadow:0 0 0 1px var(--hp),0 0 14px color-mix(in srgb, var(--hp) 45%, transparent);
                          animation:panel-ailing-pulse 1.2s ease-in-out infinite alternate}
 @keyframes panel-ailing-pulse{
-  from{box-shadow:0 0 0 1px var(--hp),0 0 8px rgba(216,99,106,0.30)}
-  to  {box-shadow:0 0 0 1px var(--hp),0 0 18px rgba(216,99,106,0.65)}
+  from{box-shadow:0 0 0 1px var(--hp),0 0 8px color-mix(in srgb, var(--hp) 30%, transparent)}
+  to  {box-shadow:0 0 0 1px var(--hp),0 0 18px color-mix(in srgb, var(--hp) 65%, transparent)}
 }
-/* Ailment cue layer 3 — buff strip pills for ailments */
+/* Ailment cue layer 3 — buff strip pills for ailments. Background tints
+   are derived from the active theme's --hp via color-mix so light themes
+   don't get a hardcoded dark-theme red wash. */
 .buff-strip .ailment{color:var(--hp);border-color:var(--hp);
-                     background:rgba(216,99,106,0.10);
+                     background:color-mix(in srgb, var(--hp) 12%, transparent);
                      animation:ailment-blink 1.6s ease-in-out infinite alternate}
 @keyframes ailment-blink{
-  from{background:rgba(216,99,106,0.06)}
-  to  {background:rgba(216,99,106,0.18)}
+  from{background:color-mix(in srgb, var(--hp) 7%, transparent)}
+  to  {background:color-mix(in srgb, var(--hp) 20%, transparent)}
 }
 /* Alchemy panel — quality row + brew slot styling */
 .q-row{display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;
@@ -215,15 +218,42 @@ pre.map .hero.ailing{color:var(--hp);text-shadow:0 0 8px var(--hp),0 0 16px var(
 .q-row .q-count{color:var(--fg);font-weight:600}
 .brew-slot{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;
            padding:6px 8px;border:1px solid var(--border);background:var(--bg);margin-bottom:4px}
-.brew-slot.empty{opacity:0.55;border-style:dashed}
+.brew-slot.empty{border-style:dashed;border-color:color-mix(in srgb, var(--hi2) 50%, var(--border))}
+.brew-slot.empty .nm{color:var(--hi2);opacity:0.85}
+.brew-slot.empty .det{color:color-mix(in srgb, var(--hi2) 70%, var(--dim));font-style:italic}
 .brew-slot .nm{color:var(--hi);font-weight:600}
 .brew-slot .det{color:var(--dim);font-size:11px}
+/* Brew progress bar uses the herb material color so it reads as alchemy,
+   distinct from research/crusade/HP bars elsewhere in the UI. */
+.bar.brewbar{background:color-mix(in srgb, var(--mat-herb) 18%, var(--xpbg))}
+.bar.brewbar>span{background:var(--mat-herb)}
 .alchemy-skill{padding:6px 8px;background:var(--panel2);border:1px solid var(--border);
                margin-bottom:6px;display:flex;flex-direction:column;gap:4px}
 .alchemy-skill .row1{display:flex;justify-content:space-between;align-items:baseline}
 .alchemy-skill .lvl{color:var(--hi);font-weight:700;font-size:13px}
 .alchemy-skill .stats{color:var(--dim);font-size:11px}
 .alchemy-skill .bar.maxed>span{background:var(--gold)}
+/* Any maxed XP/mana/HP bar elsewhere also gold-fills for visual consistency. */
+.bar.xpbar.maxed>span,.bar.manabar.maxed>span,.bar.maxed>span{background:var(--gold)}
+/* Respect OS-level motion reduction: ailment pulses keep their red coloring
+   but stop animating. Visual cue still reads as "you are afflicted." */
+@media (prefers-reduced-motion: reduce) {
+  pre.map .hero.ailing,
+  .panel.hero-panel.ailing,
+  .buff-strip .ailment { animation: none !important; }
+}
+/* Auto-config controls in the potion cabinet — bigger hit target than UA defaults
+   so the threshold input and the on/cure toggles are usable on touch screens. */
+.auto-cfg{display:inline-flex;align-items:center;gap:6px;padding:4px 6px;
+          color:var(--dim);font-size:11px;min-height:28px;
+          border:1px solid color-mix(in srgb, var(--border) 70%, transparent);
+          border-radius:2px;background:color-mix(in srgb, var(--panel2) 70%, transparent);
+          cursor:pointer}
+.auto-cfg:hover{border-color:var(--border);color:var(--fg)}
+.auto-cfg input[type="number"]{width:48px;min-height:22px;padding:1px 4px;
+                               font-family:var(--mono);font-size:11px;
+                               background:var(--bg);color:var(--fg);border:1px solid var(--border)}
+.auto-cfg input[type="checkbox"]{width:16px;height:16px;cursor:pointer}
 .bar{position:relative;height:14px;background:var(--hpbg);border:1px solid var(--border);margin:2px 0}
 .bar>span{position:absolute;inset:0;display:block;width:0%;background:var(--hp);transition:width .12s linear}
 .bar.xpbar{background:var(--xpbg)}.bar.xpbar>span{background:var(--xp)}
@@ -264,6 +294,7 @@ button.act{background:var(--bg);color:var(--fg);border:1px solid var(--border);
 button.act:hover:not(:disabled){border-color:var(--hi);color:var(--hi)}
 button.act:disabled{color:var(--dim);cursor:not-allowed}
 button.act.toggle.on{color:var(--hi2);border-color:var(--hi2)}
+button.act.danger{color:var(--hp);border-color:color-mix(in srgb, var(--hp) 60%, var(--border))}
 button.act.danger:hover{border-color:var(--hp);color:var(--hp)}
 button.act.warn:hover{border-color:var(--gold);color:var(--gold)}
 textarea.save{width:100%;min-height:60px;background:var(--bg);color:var(--fg);
@@ -1486,15 +1517,23 @@ const ALCHEMY_LVL_CAP=100;
 // Ailments inflicted on the hero by enemies whose element matches.
 // kind:'dot' applies dps over remaining duration; kind:'stat' applies a
 // negative additive shift in recomputeStats; kind:'mixed' does both.
+//   basePctHp — DoT scales as % of hero maxHp/sec (snapshot at apply time)
+//   statMod   — flat additive shifts; use for already-percentage stats
+//               (crit, spd, dmgMul) where flat numbers ARE percentages
+//   statModPct — percentage-of-current-stat reductions for absolute stats
+//               (atk, def, manaRegen); resolved at apply time against hero stat
+// Glyphs use ︎ (text-presentation selector) so monospace fonts don't
+// render them as emoji and break the map grid. Void/hemorrhage glyphs are
+// distinct from their element glyphs to avoid buff-strip collision.
 const AILMENT_TYPES={
-  burn:       {name:'Burn',       glyph:'≋', element:'fire',   kind:'dot',   baseDps:2.0, baseDur:5},
-  frost:      {name:'Frost',      glyph:'❄', element:'water',  kind:'stat',  statMod:{spd:-0.20,crit:-0.05}, baseDur:6},
-  weaken:     {name:'Weaken',     glyph:'▼', element:'earth',  kind:'stat',  statMod:{atk:-6}, baseDur:6},
-  frailty:    {name:'Frailty',    glyph:'✖', element:'air',    kind:'stat',  statMod:{def:-8}, baseDur:6},
-  blind:      {name:'Blind',      glyph:'◌', element:'light',  kind:'stat',  statMod:{crit:-0.10}, baseDur:5},
-  curse:      {name:'Curse',      glyph:'☠', element:'shadow', kind:'mixed', baseDps:1.5, statMod:{dmgMul:-0.20}, baseDur:6},
-  hemorrhage: {name:'Hemorrhage', glyph:'♦', element:'blood',  kind:'dot',   baseDps:3.5, baseDur:5},
-  void:       {name:'Void',       glyph:'❉', element:'arcane', kind:'stat',  statMod:{manaRegen:-3}, baseDur:6},
+  burn:       {name:'Burn',       glyph:'≋',       element:'fire',   kind:'dot',   basePctHp:1.5, baseDur:5},
+  frost:      {name:'Frost',      glyph:'❄︎', element:'water',  kind:'stat',  statMod:{spd:-0.20,crit:-0.05}, baseDur:6},
+  weaken:     {name:'Weaken',     glyph:'▼',       element:'earth',  kind:'stat',  statModPct:{atk:-0.20}, baseDur:6},
+  frailty:    {name:'Frailty',    glyph:'✖',       element:'air',    kind:'stat',  statModPct:{def:-0.25}, baseDur:6},
+  blind:      {name:'Blind',      glyph:'◌',       element:'light',  kind:'stat',  statMod:{crit:-0.10}, baseDur:5},
+  curse:      {name:'Curse',      glyph:'☠︎', element:'shadow', kind:'mixed', basePctHp:1.0, statMod:{dmgMul:-0.20}, baseDur:6},
+  hemorrhage: {name:'Hemorrhage', glyph:'◈',       element:'blood',  kind:'dot',   basePctHp:2.5, baseDur:5},
+  void:       {name:'Void',       glyph:'⊛',       element:'arcane', kind:'stat',  statModPct:{manaRegen:-0.50}, baseDur:6},
 };
 // Reverse map: element → ailment id for fast lookup in applyAilment.
 const ELEMENT_TO_AILMENT={};
@@ -1574,10 +1613,10 @@ const POTION_RECIPES=[
    cost:{gold:1500, dust:300, crystal:30, gem:2, herb:60},
    effect:{kind:'immunity', dur:60},
    desc:'Immune to Void (Arcane) for 60s. Q scales duration.', glyph:'❉'},
-  {id:'p_imm_all',    name:'Pure Vessel',       category:'immunity', tier:3, brewTime:600, element:'all',
+  {id:'p_imm_all',    name:'Pure Vessel',       category:'immunity', tier:3, brewTime:300, element:'all',
    cost:{gold:18000, dust:1500, crystal:150, gem:6, herb:250},
-   effect:{kind:'immunity', dur:30},
-   desc:'Immune to ALL ailments for 30s. Q scales duration.', glyph:'★'},
+   effect:{kind:'immunity', dur:90},
+   desc:'Immune to ALL ailments for 90s. Q scales duration.', glyph:'★'},
 
   // --- Cures (clear an ailment; quality irrelevant for cures themselves)
   {id:'p_cure_burn',       name:'Cure Burn',       category:'cure', tier:0, brewTime:0, element:'fire',
@@ -1643,7 +1682,9 @@ const POTION_RECIPES=[
    desc:'+50% ritual yield / 10min. Q scales amt + duration.', glyph:'⌬'},
 ];
 // XP awarded on brew complete, scaled by recipe tier.
-const ALCHEMY_XP_PER_TIER=[1, 5, 25, 100];
+// T0 awards no XP so auto-brewing instant recipes can't power-level the skill;
+// real progression comes from time-gated T1+ brews.
+const ALCHEMY_XP_PER_TIER=[0, 5, 25, 100];
 
 // ============================================================
 // STATE
@@ -1773,6 +1814,13 @@ const isLegendaryUnlocked=()=>G.hero.lvl>=RANKS[6].lvl;
 const isRitualUnlocked=()=>G.hero.lvl>=RANKS[2].lvl;
 const isTrialUnlocked=()=>G.hero.lvl>=RANKS[3].lvl;
 const isAlchemyUnlocked=()=>G.hero.lvl>=RANKS[2].lvl;        // Adept (lvl 9)
+// Locked-tab sub-header copy. Shows "unlocks at X (lvl N) — you are lvl K · M to go"
+// so the player doesn't have to do the math themselves.
+function lockMsg(rankIdx){
+  const r=RANKS[rankIdx];
+  const togo=Math.max(0,r.lvl-G.hero.lvl);
+  return `unlocks at ${r.name} (lvl ${r.lvl}) — you are lvl ${G.hero.lvl} · ${togo} to go`;
+}
 const isAutoBrew=()=>G.hero.lvl>=RANKS[5].lvl;               // Magus (lvl 36)
 // Alchemy: skill curve, slot count, quality roll, immunity check.
 function xpForAlchemyLevel(lvl){return Math.floor(15*Math.pow(1.05,Math.max(0,lvl-1)));}
@@ -1788,10 +1836,13 @@ function hasImmunity(elementId){
   return G.buffs.some(b=>b.stat==='immune:'+elementId||b.stat==='immune:all');
 }
 function bumpAlchemyXp(amount){
+  if(!amount)return;
   const a=G.alchemy;a.xp+=amount;
-  while(a.lvl<ALCHEMY_LVL_CAP&&a.xp>=xpForAlchemyLevel(a.lvl+1)){
-    a.xp-=xpForAlchemyLevel(a.lvl+1);a.lvl++;
+  let next=xpForAlchemyLevel(a.lvl+1);
+  while(a.lvl<ALCHEMY_LVL_CAP&&a.xp>=next){
+    a.xp-=next;a.lvl++;
     logLine(`★ Alchemy Lv ${a.lvl} (brew slots: ${brewSlotCount()}${a.lvl===ALCHEMY_LVL_CAP?', perfect brews unlocked':''})`,'rank');
+    next=xpForAlchemyLevel(a.lvl+1);
   }
   if(a.lvl>=ALCHEMY_LVL_CAP)a.xp=0;
 }
@@ -1806,13 +1857,6 @@ function startBrew(recipeId){
   if(!r.brewTime){completeBrew(recipeId);return;}
   G.alchemy.brewSlots.push({id:recipeId,timeLeft:r.brewTime});
   logLine(`Brewing ${r.name} (${r.brewTime}s).`,'sys');
-}
-function payCost(c){
-  if(c.gold)G.gold-=c.gold;
-  if(c.dust)G.materials.dust-=c.dust;
-  if(c.crystal)G.materials.crystal-=c.crystal;
-  if(c.gem)G.materials.gem-=c.gem;
-  if(c.herb)G.materials.herb-=c.herb;
 }
 function refundCost(c,frac){
   if(c.gold)G.gold+=Math.floor(c.gold*frac);
@@ -1834,8 +1878,9 @@ function completeBrew(recipeId){
 }
 function brewSpeedMul(){
   // Lab Imp researchSpeed bonus also flows into brew speed (per plan §F).
-  const rs=G.baseStats.researchSpeed||0;
-  return 1+rs;
+  // researchSpeed baselines at 1.0 in recomputeStats; familiar contributions
+  // add on top, so we return it directly (1.0 = no bonus, 1.2 = 20% faster).
+  return G.baseStats.researchSpeed||1;
 }
 function tickBrew(){
   if(!G.alchemy.brewSlots.length)return;
@@ -1855,15 +1900,26 @@ function cancelBrew(slotIdx){
   G.alchemy.brewSlots.splice(slotIdx,1);
   logLine(`Cancelled ${r?r.name:'brew'}; 50% refund.`,'sys');
 }
+let _autoBrewInFlight=false;
 function tryAutoBrew(){
+  // Re-entrance guard: completeBrew calls tryAutoBrew, which calls startBrew,
+  // which for T0 instant recipes calls completeBrew again — unbounded recursion
+  // unless we short-circuit. The outer while loop already iterates, so any
+  // re-entrant call is a no-op.
+  if(_autoBrewInFlight)return;
   if(!isAutoBrew()||!G.alchemy.autoBrew)return;
-  let safety=10; // never busy-loop
-  while(safety-- > 0 && G.alchemy.brewSlots.length<brewSlotCount()){
-    const r=getRecipe(G.alchemy.autoBrew);if(!r)return;
-    if(!canPay(r.cost))return;
-    startBrew(G.alchemy.autoBrew);
-    if(!r.brewTime)continue; // instant brew, try to fill another slot
-    return; // time-gated brew filled this slot; bail
+  _autoBrewInFlight=true;
+  try{
+    let safety=20; // hard ceiling on instant-brew bursts per call
+    while(safety-- > 0 && G.alchemy.brewSlots.length<brewSlotCount()){
+      const r=getRecipe(G.alchemy.autoBrew);if(!r)return;
+      if(!canPay(r.cost))return;
+      startBrew(G.alchemy.autoBrew);
+      if(!r.brewTime)continue; // instant brew, try to fill another slot
+      return; // time-gated brew filled this slot; bail
+    }
+  } finally {
+    _autoBrewInFlight=false;
   }
 }
 // Consumption — consumePotion, tickAutoConsume
@@ -1935,24 +1991,37 @@ function applyAilment(elementId,enemyLvl){
   if(!aid)return false;
   if(hasImmunity(elementId)){logLine(`✦ Resisted ${AILMENT_TYPES[aid].name}.`,'cast');return false;}
   const a=AILMENT_TYPES[aid];
-  const sev=1+Math.max(0,enemyLvl-1)*0.05; // +5% per enemy level above 1
+  // Auto-cure short-circuit: if a configured cure (specific or 'all') is
+  // stocked, skip the affliction entirely instead of pushing-then-removing.
+  const cureId=G.alchemy.autoCure[aid]||G.alchemy.autoCure.all;
+  const stocked=cureId&&G.alchemy.potions[cureId]&&Object.values(G.alchemy.potions[cureId]).some(c=>c>0);
+  if(stocked){
+    consumePotion(cureId);
+    logLine(`✦ Auto-cured ${a.name} on contact.`,'cast');
+    return false;
+  }
   const dur=a.baseDur;
   const inst={id:aid,remaining:dur,source:elementId};
-  if(a.kind==='dot'||a.kind==='mixed')inst.dps=(a.baseDps||0)*sev;
-  if(a.kind==='stat'||a.kind==='mixed'){
+  // DoT damage scales with hero maxHp so endgame ailments stay meaningful
+  // instead of dealing trivial flat damage.
+  if(a.basePctHp)inst.dps=a.basePctHp/100*G.hero.maxHp;
+  if(a.statMod||a.statModPct){
     inst.statMod={};
-    for(const k in a.statMod)inst.statMod[k]=a.statMod[k]*sev;
+    // Flat-additive stat mods (already-percentage stats like crit/spd/dmgMul)
+    if(a.statMod)for(const k in a.statMod)inst.statMod[k]=a.statMod[k];
+    // Percentage-of-current-stat mods (atk/def/manaRegen) snapshot at apply time
+    if(a.statModPct){
+      for(const k in a.statModPct){
+        const cur=G.baseStats[k]||0;
+        inst.statMod[k]=(inst.statMod[k]||0)+a.statModPct[k]*cur;
+      }
+    }
   }
   // Replace existing instance of same id rather than stacking — refresh duration.
   G.hero.ailments=G.hero.ailments.filter(x=>x.id!==aid);
   G.hero.ailments.push(inst);
   if(inst.statMod)recomputeStats();
   logLine(`⚠ Afflicted: ${a.name} (${dur}s)`,'die');
-  // Auto-cure hook
-  const cureId=G.alchemy.autoCure[aid];
-  if(cureId&&G.alchemy.potions[cureId]&&Object.keys(G.alchemy.potions[cureId]).length>0){
-    consumePotion(cureId);
-  }
   return true;
 }
 function tickAilments(){
@@ -2186,8 +2255,14 @@ function recomputeStats(){
   }
   for(const buff of G.buffs){
     if(buff.stat&&buff.stat.startsWith('immune:'))continue; // markers, not stats
-    if(buff.stat==='dmgMul')s.dmgMul*=(1+buff.amt);
-    else s[buff.stat]=(s[buff.stat]||0)+buff.amt;
+    // Multiplicative folding for percent-style stats so booster brews stack
+    // consistently with gear / building / research bonuses of the same stat.
+    if(buff.stat==='dmgMul'||buff.stat==='goldFind'||buff.stat==='xpMul'
+       ||buff.stat==='elXpMul'||buff.stat==='ritualMul'){
+      s[buff.stat]=(s[buff.stat]||1)*(1+buff.amt);
+    } else {
+      s[buff.stat]=(s[buff.stat]||0)+buff.amt;
+    }
   }
   // Hero ailments — additive negative shifts (statMod values are already negative).
   // dmgMul ailments fold multiplicatively to mirror buff handling above; floor at 0.1
@@ -3227,6 +3302,7 @@ function canPay(c){
   if(c.dust&&G.materials.dust<c.dust)return false;
   if(c.crystal&&G.materials.crystal<c.crystal)return false;
   if(c.gem&&G.materials.gem<c.gem)return false;
+  if(c.herb&&(G.materials.herb||0)<c.herb)return false;
   return true;
 }
 function payCost(c){
@@ -3234,6 +3310,7 @@ function payCost(c){
   G.materials.dust-=c.dust||0;
   G.materials.crystal-=c.crystal||0;
   G.materials.gem-=c.gem||0;
+  if(c.herb)G.materials.herb=(G.materials.herb||0)-c.herb;
 }
 function forgeCombine(slot,tier,rarity){
   const items=G.gearInventory.filter(i=>i.slot===slot&&i.tier===tier&&i.rarity===rarity&&!i.legendary);
@@ -3704,10 +3781,9 @@ function awaken(){
   ELEMENTS.forEach(e=>{G.elements[e]=0;G.elementXp[e]=0;});
   BUILDINGS.forEach(b=>G.buildings[b.id]=0);
   G.golems={dust:0,crystal:0,gem:0,herb:0};
-  // Alchemy: keep skill (lvl/xp), cabinet, autoDrink/autoCure preferences as
-  // meta-progression (mirrors spellMastery). Clear in-flight brew slots only.
+  // Alchemy: keep skill (lvl/xp), cabinet, and all auto-* UI preferences as
+  // meta-progression (mirrors spellMastery). Clear only in-flight brew slots.
   G.alchemy.brewSlots=[];
-  G.alchemy.autoBrew=null;
   if(!keepFamiliars)G.familiars=[];
   if(!keepGear){
     G.gear={hat:null,robe:null,staff:null,ring:null,amulet:null};
@@ -3846,7 +3922,11 @@ function importSave(str){
     while(G.equippedSpells.length<8)G.equippedSpells.push(null);
     G.elements={fire:0,water:0,earth:0,air:0,light:0,shadow:0,blood:0,arcane:0,...(d.elements||{})};
     G.elementXp={fire:0,water:0,earth:0,air:0,light:0,shadow:0,blood:0,arcane:0,...(d.elementXp||{})};
-    G.buildings={...G.buildings,...(d.buildings||{})};
+    // Rebuild from BUILDINGS list so stale keys from a prior session don't
+    // leak in when the player imports without reloading the page.
+    G.buildings={};
+    BUILDINGS.forEach(b=>G.buildings[b.id]=0);
+    Object.assign(G.buildings,d.buildings||{});
     G.golems={dust:0,crystal:0,gem:0,herb:0,...(d.golems||{})};
     G.familiars=d.familiars||[];
     if(legacy){
@@ -3891,14 +3971,17 @@ function importSave(str){
       }
     }
     // Alchemy — initialize defaults for v<26 saves; otherwise hydrate.
+    // Type-guard each alchemy field so a malformed import (e.g. wrong type from
+    // hand-edited JSON) can't crash the cabinet/auto-config renders.
+    const _isPlainObj=v=>v&&typeof v==='object'&&!Array.isArray(v);
     G.alchemy={
-      lvl:d.alchemy?.lvl||1,
-      xp:d.alchemy?.xp||0,
-      potions:d.alchemy?.potions||{},
+      lvl:Math.max(1,Math.min(ALCHEMY_LVL_CAP,d.alchemy?.lvl|0||1)),
+      xp:Math.max(0,d.alchemy?.xp|0),
+      potions:_isPlainObj(d.alchemy?.potions)?d.alchemy.potions:{},
       brewSlots:Array.isArray(d.alchemy?.brewSlots)?d.alchemy.brewSlots:[],
-      autoDrink:d.alchemy?.autoDrink||{},
-      autoCure:d.alchemy?.autoCure||{},
-      autoBrew:d.alchemy?.autoBrew||null,
+      autoDrink:_isPlainObj(d.alchemy?.autoDrink)?d.alchemy.autoDrink:{},
+      autoCure:_isPlainObj(d.alchemy?.autoCure)?d.alchemy.autoCure:{},
+      autoBrew:typeof d.alchemy?.autoBrew==='string'?d.alchemy.autoBrew:null,
     };
     G.autoExplore=d.autoExplore!==false;
     G.eclipseSeen=!!d.eclipseSeen;
@@ -3996,6 +4079,7 @@ function costStrHTML(c){
   if(c.dust)parts.push(`<span class="${G.materials.dust>=c.dust?'ok':'nope'}">${fmt(c.dust)} dust</span>`);
   if(c.crystal)parts.push(`<span class="${G.materials.crystal>=c.crystal?'ok':'nope'}">${fmt(c.crystal)} crystal</span>`);
   if(c.gem)parts.push(`<span class="${G.materials.gem>=c.gem?'ok':'nope'}">${fmt(c.gem)} gem</span>`);
+  if(c.herb)parts.push(`<span class="${(G.materials.herb||0)>=c.herb?'ok':'nope'}">${fmt(c.herb)} herb</span>`);
   return parts.join(' · ');
 }
 function gearLabel(item){
@@ -4674,7 +4758,7 @@ const MANOR_CATEGORIES=[
 ];
 function renderManor(){
   if(!isManorUnlocked()){
-    $('manor-lock').textContent=`unlocks at Initiate (lvl ${RANKS[1].lvl})`;
+    $('manor-lock').textContent=lockMsg(1);
     $('buildings').innerHTML=`<div class="sub">Sealed until Initiate rank.</div>`;return;
   }
   $('manor-lock').textContent='';
@@ -4738,7 +4822,7 @@ function renderManor(){
 }
 function renderTower(){
   if(!isTowerUnlocked()){
-    $('tower-lock').textContent=`unlocks at Adept (lvl ${RANKS[2].lvl})`;
+    $('tower-lock').textContent=lockMsg(2);
     $('tower-recipes').innerHTML='';return;
   }
   $('tower-lock').textContent='';
@@ -4792,7 +4876,7 @@ function renderTower(){
 }
 function renderLegendary(){
   if(!isLegendaryUnlocked()){
-    $('legendary-lock').textContent=`unlocks at Archmage (lvl ${RANKS[6].lvl})`;
+    $('legendary-lock').textContent=lockMsg(6);
     $('legendary-recipes').innerHTML='';return;
   }
   $('legendary-lock').textContent='';
@@ -4823,7 +4907,7 @@ function renderLegendary(){
 // ============================================================
 function renderGolems(){
   if(!isGolemsUnlocked()){
-    $('golems-lock').textContent=`unlocks at Adept (lvl ${RANKS[2].lvl})`;
+    $('golems-lock').textContent=lockMsg(2);
     $('mat-strip-golems').innerHTML='';
     $('golem-list').innerHTML=`<div class="sub">Sealed.</div>`;
     return;
@@ -4854,7 +4938,7 @@ function renderGolems(){
 
 function renderFamiliars(){
   if(!isFamiliarsUnlocked()){
-    $('familiars-lock').textContent=`unlocks at Sorcerer (lvl ${RANKS[3].lvl})`;
+    $('familiars-lock').textContent=lockMsg(3);
     $('mat-strip-familiars').innerHTML='';
     $('summon-options').innerHTML=`<div class="sub">Sealed.</div>`;
     $('familiar-list').innerHTML='';
@@ -4949,7 +5033,7 @@ const RESEARCH_CATEGORIES=[
 ];
 function renderResearch(){
   if(!isResearchUnlocked()){
-    $('research-lock').textContent=`unlocks at Sorcerer (lvl ${RANKS[3].lvl})`;
+    $('research-lock').textContent=lockMsg(3);
     $('research-active-wrap').innerHTML='';
     $('research-list').innerHTML=`<div class="sub">Sealed.</div>`;
     return;
@@ -5017,7 +5101,7 @@ function renderResearch(){
 
 function renderTrial(){
   if(!isTrialUnlocked()){
-    $('trial-lock').textContent=`unlocks at Sorcerer (lvl ${RANKS[3].lvl})`;
+    $('trial-lock').textContent=lockMsg(3);
     $('trial-status').innerHTML=`<div class="sub">Sealed.</div>`;
     $('trial-upgrades').innerHTML='';
     return;
@@ -5124,7 +5208,7 @@ const ALCHEMY_CATEGORIES=[
 ];
 function renderAlchemy(){
   if(!isAlchemyUnlocked()){
-    $('alchemy-lock').textContent=`unlocks at Adept (lvl ${RANKS[2].lvl})`;
+    $('alchemy-lock').textContent=lockMsg(2);
     $('alchemy-skill-bar').innerHTML='';
     $('brewing-status').innerHTML=`<div class="sub">Sealed.</div>`;
     $('alchemy-recipes').innerHTML='';
@@ -5159,13 +5243,13 @@ function renderAlchemy(){
         <div>
           <div class="nm">${r?r.name:slot.id}</div>
           <div class="det">${fmtTime(Math.max(0,slot.timeLeft))} remaining</div>
-          <div class="bar"><span style="width:${p}%;background:var(--hi)"></span><div class="txt">${p.toFixed(0)}%</div></div>
+          <div class="bar brewbar"><span style="width:${p}%"></span><div class="txt">${p.toFixed(0)}%</div></div>
         </div>
         <button class="act danger" data-cancel-brew="${i}">Cancel</button>
       </div>`;
     } else {
       bs+=`<div class="brew-slot empty">
-        <div><div class="nm">Empty Slot ${i+1}</div><div class="det">— ready to brew —</div></div>
+        <div><div class="nm">◷ Slot ${i+1} ready</div><div class="det">pick a recipe below</div></div>
         <div></div>
       </div>`;
     }
@@ -5264,13 +5348,13 @@ function renderAlchemy(){
           const ek=r.effect.kind;
           if(ek==='heal'||ek==='mana'){
             const cfg=a.autoDrink[r.id]||{threshold:0.30,enabled:false};
-            autoCfg=`<label class="sub" style="font-size:11px">auto: ${ek==='heal'?'HP':'MANA'} &lt;
-              <input type="number" min="5" max="95" step="5" value="${Math.round((cfg.threshold||0.30)*100)}" data-auto-thr="${r.id}" style="width:46px"> %
+            autoCfg=`<label class="auto-cfg">auto: ${ek==='heal'?'HP':'MANA'} &lt;
+              <input type="number" min="5" max="95" step="5" value="${Math.round((cfg.threshold||0.30)*100)}" data-auto-thr="${r.id}"> %
               <input type="checkbox" data-auto-en="${r.id}" ${cfg.enabled?'checked':''}> on</label>`;
           } else if(ek==='cure'){
             const ailmentId=r.element==='all'?'all':ELEMENT_TO_AILMENT[r.element];
             const cur=a.autoCure[ailmentId];
-            autoCfg=`<label class="sub" style="font-size:11px">
+            autoCfg=`<label class="auto-cfg">
               <input type="checkbox" data-auto-cure="${r.id}" data-aid="${ailmentId}" ${cur===r.id?'checked':''}>
               auto-cure ${r.element==='all'?'any':AILMENT_TYPES[ailmentId]?.name||r.element}</label>`;
           }
@@ -5333,7 +5417,7 @@ function renderAlchemy(){
 
 function renderRitual(){
   if(!isRitualUnlocked()){
-    $('ritual-lock').textContent=`unlocks at Adept (lvl ${RANKS[2].lvl})`;
+    $('ritual-lock').textContent=lockMsg(2);
     $('ritual-status').innerHTML=`<div class="sub">Sealed.</div>`;
     $('ritual-detail').innerHTML='';
     return;
