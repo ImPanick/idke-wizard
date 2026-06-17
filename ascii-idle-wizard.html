@@ -140,11 +140,10 @@ body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--mono);font-
   pre.map{font-size:11px}
 }
 #dash{grid-area:dash;display:flex;flex-direction:column;gap:8px}
-/* Right column lets the combat log flex-grow into available vertical instead
-   of being capped at its own content height. Zones cling to natural size;
-   the log fills whatever's left. */
-#right .log-panel{flex:1;display:flex;flex-direction:column;min-height:0}
-#right .log-panel .log{flex:1;min-height:180px}
+/* Combat log is a contained scroll region — viewport-relative height so it
+   stays usefully tall on large screens but never expands the page. Scrolls
+   internally. The log-panel itself is sized by its content. */
+#right .log-panel{display:flex;flex-direction:column;min-height:0}
 .panel{background:var(--panel);border:1px solid var(--border);padding:8px 10px;overflow:hidden}
 .panel h2{margin:0 0 6px 0;font-size:12px;font-weight:600;color:var(--hi);letter-spacing:.08em;
           text-transform:uppercase;border-bottom:1px dashed var(--border);padding-bottom:4px;
@@ -287,7 +286,7 @@ pre.map .hero.ailing{color:var(--hp);text-shadow:0 0 8px var(--hp),0 0 16px var(
 .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px 14px;margin-top:4px}
 .stats-grid div{display:flex;justify-content:space-between}
 .stats-grid .k{color:var(--dim)}.stats-grid .v{color:var(--fg)}
-.log{height:180px;overflow-y:auto;font-size:12px}
+.log{height:60vh;max-height:60vh;min-height:220px;overflow-y:auto;font-size:12px}
 .log .line{padding:1px 0;border-bottom:1px dotted var(--row-divider)}
 .log .line.dmg{color:var(--mob)}.log .line.cast{color:var(--mana)}.log .line.heal{color:var(--xp)}
 .log .line.loot{color:var(--gold)}.log .line.sys{color:var(--dim)}
