@@ -118,8 +118,33 @@ body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--mono);font-
         font-family:var(--mono);font-size:22px;line-height:1.35;letter-spacing:6px;
         color:var(--hi);opacity:0.05;white-space:pre}
 .app{position:relative;z-index:1}
-.app{display:grid;grid-template-columns:minmax(340px,1.3fr) 1fr;gap:8px;max-width:1400px;margin:0 auto;
-     grid-template-areas:"top top" "tabs tabs" "left right" "bottom bottom"}
+/* Three-column dashboard grid on wide viewports: tab content | live dashboard | log/zones/rank.
+   The dashboard column is *always* visible so the idle heartbeat (rates, next up, target intel)
+   never gets hidden behind a tab switch. Collapses gracefully on narrow widths. */
+.app{display:grid;
+     grid-template-columns:minmax(340px,1.5fr) minmax(280px,0.85fr) minmax(280px,1fr);
+     gap:8px;max-width:var(--app-max,1800px);margin:0 auto;
+     grid-template-areas:"top top top" "tabs tabs tabs" "left dash right" "bottom bottom bottom"}
+@media(max-width:1400px){
+  .app{grid-template-columns:minmax(340px,1.3fr) 1fr;
+       grid-template-areas:"top top" "tabs tabs" "left right" "dash dash" "bottom bottom"}
+  /* Below 1400px the dash slides under the two main columns; lay its three
+     panels out side-by-side so it reads as one horizontal heartbeat strip
+     instead of a three-row pile. */
+  #dash{flex-direction:row;flex-wrap:wrap}
+  #dash > .panel{flex:1 1 280px;min-width:0}
+}
+@media(max-width:800px){
+  .app{grid-template-columns:1fr;
+       grid-template-areas:"top" "tabs" "left" "dash" "right" "bottom"}
+  pre.map{font-size:11px}
+}
+#dash{grid-area:dash;display:flex;flex-direction:column;gap:8px}
+/* Right column lets the combat log flex-grow into available vertical instead
+   of being capped at its own content height. Zones cling to natural size;
+   the log fills whatever's left. */
+#right .log-panel{flex:1;display:flex;flex-direction:column;min-height:0}
+#right .log-panel .log{flex:1;min-height:180px}
 .panel{background:var(--panel);border:1px solid var(--border);padding:8px 10px;overflow:hidden}
 .panel h2{margin:0 0 6px 0;font-size:12px;font-weight:600;color:var(--hi);letter-spacing:.08em;
           text-transform:uppercase;border-bottom:1px dashed var(--border);padding-bottom:4px;
@@ -453,37 +478,152 @@ pre.map .trialBoss{color:var(--gold);font-weight:700}
 .gem-choice{padding:6px 8px;border:1px solid var(--border);margin-bottom:4px;display:flex;
             justify-content:space-between;align-items:center;cursor:pointer;background:var(--bg)}
 .gem-choice:hover{border-color:var(--hi)}
+
+/* ============================================================
+   IDLE DASHBOARD — rates, next-up, target intel, spell hotbar
+   ============================================================ */
+/* Resource rail in the top bar — gold/xp/mana with inline /sec rates.
+   The rate chip is dim until it's nonzero so a freshly started game doesn't
+   look broken showing +0/s everywhere. */
+#top .res .rate{color:var(--hi2);font-size:10px;margin-left:4px;letter-spacing:.04em}
+#top .res .rate.zero{color:var(--dim);opacity:0.55}
+#top .row2{display:flex;flex-wrap:wrap;gap:10px;width:100%;padding-top:4px;
+           margin-top:4px;border-top:1px dashed var(--border);align-items:center}
+#top .row2 .mat-strip{margin:0;padding:0;background:transparent;border:none}
+#top .status-chip{display:inline-flex;gap:4px;align-items:center;padding:2px 6px;
+                  border:1px solid var(--border);font-size:11px;color:var(--dim)}
+#top .status-chip.warn{color:var(--hp);border-color:var(--hp)}
+#top .status-chip.good{color:var(--hi2);border-color:var(--hi2)}
+#top .status-chip .v{color:var(--fg);font-weight:600}
+/* Rates panel — the idle heartbeat */
+.rates-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px}
+.rates-grid .row{display:flex;justify-content:space-between;padding:2px 0;
+                 border-bottom:1px dotted color-mix(in srgb,var(--border) 60%,transparent);font-size:11px}
+.rates-grid .lbl{color:var(--dim)}
+.rates-grid .v{color:var(--fg);font-weight:600}
+.rates-grid .v.gain{color:var(--hi2)}
+.rates-grid .v.zero{color:var(--dim);opacity:0.55}
+.rates-window{color:var(--dim);font-size:10px;text-align:right;margin-top:4px;font-style:italic}
+/* Next Up — the player's near-term goals with countdowns */
+.nextup-list{display:flex;flex-direction:column;gap:4px}
+.nextup-row{display:grid;grid-template-columns:auto 1fr auto;gap:6px;
+            padding:4px 6px;border:1px solid color-mix(in srgb,var(--border) 70%,transparent);
+            background:color-mix(in srgb,var(--panel2) 60%,transparent);font-size:11px;align-items:baseline}
+.nextup-row .icn{color:var(--hi);font-weight:700;min-width:18px;text-align:center}
+.nextup-row .lbl{color:var(--fg)}
+.nextup-row .lbl .sub{color:var(--dim);font-size:10px;margin-left:4px}
+.nextup-row .to-go{color:var(--hi2);font-weight:600;font-size:11px}
+.nextup-row.ready{border-color:var(--hi2)}
+.nextup-row.ready .to-go{color:var(--gold)}
+/* Target Intel — current enemy at a glance */
+.target-intel{display:flex;flex-direction:column;gap:6px;font-size:11px}
+.target-intel .empty{color:var(--dim);font-style:italic;text-align:center;padding:8px 0}
+.target-intel .head{display:flex;justify-content:space-between;align-items:baseline}
+.target-intel .head .glyph{font-size:18px;color:var(--mob)}
+.target-intel .head .nm{color:var(--mob);font-weight:700;font-size:13px;letter-spacing:.04em}
+.target-intel .head .lvl{color:var(--dim)}
+.target-intel .el-tag{padding:1px 6px;border:1px solid currentColor;font-size:10px;letter-spacing:.04em;margin-right:4px}
+.target-intel .matchups{display:flex;flex-wrap:wrap;gap:3px}
+.target-intel .matchups .mu{padding:1px 5px;border:1px solid var(--border);font-size:10px}
+.target-intel .matchups .mu.strong{color:var(--hi2);border-color:var(--hi2)}
+.target-intel .matchups .mu.weak{color:var(--hp);border-color:var(--hp)}
+.target-intel .drops{color:var(--dim);font-size:10px;font-style:italic}
+/* Persistent spell hotbar — always visible, surfaces cooldowns + mastery */
+.spell-hotbar{display:flex;gap:4px;padding:6px 8px;border:1px solid var(--border);
+              background:color-mix(in srgb,var(--panel2) 80%,transparent);
+              flex-wrap:wrap;margin-bottom:6px}
+.spell-hotbar .hk{position:relative;display:flex;flex-direction:column;align-items:center;
+                  min-width:46px;padding:4px 4px 2px;border:1px solid var(--border);background:var(--bg);
+                  font-size:11px;cursor:pointer}
+.spell-hotbar .hk.empty{opacity:0.35;border-style:dashed}
+.spell-hotbar .hk.ready{border-color:var(--hi)}
+.spell-hotbar .hk.cd{color:var(--dim)}
+.spell-hotbar .hk .gly{font-size:14px;line-height:1}
+.spell-hotbar .hk .idx{font-size:9px;color:var(--dim);position:absolute;top:1px;left:3px}
+.spell-hotbar .hk .cdtxt{font-size:9px;color:var(--hp);margin-top:1px;letter-spacing:0.03em}
+.spell-hotbar .hk.ready .cdtxt{color:var(--hi2)}
+/* Stats grid — sectioned (Combat / Idle), 3 cols, dimmed defaults so the
+   eye locks onto stats that actually changed from baseline. */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px 14px;margin-top:4px}
+.stats-grid div{display:flex;justify-content:space-between;font-size:11px}
+.stats-grid .section{grid-column:1/-1;color:var(--hi);font-size:10px;font-weight:700;
+                     letter-spacing:.08em;text-transform:uppercase;
+                     border-bottom:1px dashed var(--border);padding:6px 0 2px;margin-top:4px}
+.stats-grid .section:first-child{margin-top:0}
+.stats-grid .lbl{color:var(--dim)}
+.stats-grid .v{color:var(--fg);font-weight:600}
+.stats-grid div.dim{opacity:0.4}
+.stats-grid .v.up{color:var(--hi2)}
+.stats-grid .v.down{color:var(--hp)}
+/* Zones collapse — locked tiers fold into a single ▸ row */
+.zone-locked-fold{padding:6px 8px;border:1px dashed var(--border);background:var(--bg);
+                  color:var(--dim);font-size:11px;cursor:pointer;text-align:left;width:100%;
+                  font-family:var(--mono);margin-top:4px}
+.zone-locked-fold:hover{color:var(--fg);border-color:var(--hi)}
+.zone-locked-fold .ct{color:var(--hi);font-weight:700}
+/* Tab grouping — visual separator between Core / Build / Endgame / Meta */
+#tabs .tab-group{font-size:9px;color:var(--dim);letter-spacing:.10em;
+                 text-transform:uppercase;padding:2px 4px 0;width:100%;margin-top:2px;
+                 border-bottom:1px dashed color-mix(in srgb,var(--border) 50%,transparent)}
+#tabs .tab-group:first-of-type{margin-top:0}
+/* Settings strip tucked behind ⚙ — collapses bottom panel to a single button at rest */
+#bottom.collapsed > :not(.btn-settings):not(.spacer):not(.author){display:none}
+#bottom .btn-settings{cursor:pointer}
+#bottom .author{color:var(--dim);font-size:11px;margin-left:auto}
+/* Density toggle — comfortable (default) vs compact tightens padding everywhere */
+body.compact .panel{padding:5px 7px}
+body.compact .panel h2{margin:0 0 4px;font-size:11px;padding-bottom:2px}
+body.compact .bar{height:12px}
+body.compact .stats-grid div{font-size:10px}
+body.compact pre.map{font-size:13px;line-height:0.95}
+body.compact #top{gap:8px}
+body.compact .nextup-row,body.compact .rates-grid .row{padding:1px 4px;font-size:10px}
+/* While-you-were-away offline gains modal */
+.afk-summary{padding:6px 0}
+.afk-summary .gain{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px dotted var(--border)}
+.afk-summary .gain .v{color:var(--hi2);font-weight:600}
 </style>
 
 <pre id="bg-art" aria-hidden="true"></pre>
 <div class="app">
   <div id="top" class="panel">
     <span class="title">⌬ ASCII IDLE WIZARD ⌬ version: 2.1.5</span>
-    <span class="res rank-r"><span class="lbl">rank</span><span class="val" id="r-rank">Apprentice</span></span>
+    <span class="res rank-r" title="hover for full rank perks"><span class="lbl">rank</span><span class="val" id="r-rank">Apprentice</span></span>
     <span class="res"><span class="lbl">lvl</span><span class="val" id="r-lvl">1</span></span>
-    <span class="res xp-r"><span class="lbl">xp</span><span class="val" id="r-xp">0/10</span></span>
-    <span class="res gold"><span class="lbl">gold</span><span class="val" id="r-gold">0</span></span>
+    <span class="res xp-r"><span class="lbl">xp</span><span class="val" id="r-xp">0/10</span><span class="rate zero" id="r-xp-rate">+0/s</span></span>
+    <span class="res gold"><span class="lbl">gold</span><span class="val" id="r-gold">0</span><span class="rate zero" id="r-gold-rate">+0/s</span></span>
     <span class="res mana-r"><span class="lbl">mana</span><span class="val" id="r-mana">0/0</span></span>
     <span class="res spark-r"><span class="lbl">spark</span><span class="val" id="r-spark">0</span></span>
     <span class="spacer"></span>
-    <span class="sub" id="r-tick">tick: —</span>
+    <span class="sub" id="r-tick">— · —</span>
+    <div class="row2">
+      <div id="mat-strip-top"></div>
+      <span class="spacer"></span>
+      <span class="status-chip" id="status-buffs" style="display:none">✦ <span class="v" id="buff-count">0</span> buffs</span>
+      <span class="status-chip warn" id="status-ailments" style="display:none">⚠ <span class="v" id="ailment-count">0</span> ailments</span>
+      <span class="status-chip" id="status-autoexp">▶ Auto-Explore: <span class="v" id="autoexp-state">ON</span></span>
+    </div>
   </div>
 
   <div id="tabs">
+    <div class="tab-group">Core</div>
     <button class="tab-btn active" data-tab="world">World</button>
     <button class="tab-btn" data-tab="spells">Spellbook</button>
     <button class="tab-btn" data-tab="elements">Elements</button>
     <button class="tab-btn" data-tab="gear">Gear</button>
+    <div class="tab-group">Build</div>
     <button class="tab-btn" data-tab="manor">Manor</button>
     <button class="tab-btn" data-tab="tower">Tower</button>
-    <button class="tab-btn" data-tab="legendary">Legendary</button>
     <button class="tab-btn" data-tab="golems">Golems</button>
     <button class="tab-btn" data-tab="familiars">Familiars</button>
     <button class="tab-btn" data-tab="research">Research</button>
     <button class="tab-btn" data-tab="ritual">Ritual</button>
+    <div class="tab-group">Endgame</div>
+    <button class="tab-btn" data-tab="legendary">Legendary</button>
+    <button class="tab-btn" data-tab="alchemy">Alchemy</button>
     <button class="tab-btn" data-tab="crusade">Crusade</button>
     <button class="tab-btn" data-tab="trials">Trials</button>
-    <button class="tab-btn" data-tab="alchemy">Alchemy</button>
+    <div class="tab-group">Meta</div>
     <button class="tab-btn" data-tab="awaken">Awakening</button>
   </div>
 
@@ -501,6 +641,7 @@ pre.map .trialBoss{color:var(--gold);font-weight:700}
       </div>
       <div class="panel hero-panel" id="hero-panel">
         <h2>Wizard</h2>
+        <div class="spell-hotbar" id="spell-hotbar"></div>
         <div class="bar"><span id="hp-fill"></span><div class="txt" id="hp-txt">HP 0/0</div></div>
         <div class="bar manabar"><span id="mana-fill"></span><div class="txt" id="mana-txt">Mana 0/0</div></div>
         <div class="bar xpbar"><span id="xp-fill"></span><div class="txt" id="xp-txt">XP 0/0</div></div>
@@ -635,13 +776,29 @@ pre.map .trialBoss{color:var(--gold);font-weight:700}
     </div>
   </div>
 
-  <div id="right">
-    <div class="panel"><h2>Combat Log</h2><div class="log" id="log"></div></div>
-    <div class="panel zones"><h2>Zones <span class="sub">slay each dragon</span></h2><div id="zones"></div></div>
-    <div class="panel"><h2>Mage Rank</h2><div id="rank-info"></div></div>
+  <div id="dash">
+    <div class="panel" id="rates-panel">
+      <h2>Rates <span class="sub" id="rates-window-lbl">last 60s</span></h2>
+      <div class="rates-grid" id="rates-grid"></div>
+    </div>
+    <div class="panel" id="nextup-panel">
+      <h2>Next Up <span class="sub">near-term goals</span></h2>
+      <div class="nextup-list" id="nextup-list"></div>
+    </div>
+    <div class="panel" id="target-panel">
+      <h2>Target Intel <span class="sub" id="target-status">no target</span></h2>
+      <div class="target-intel" id="target-intel"></div>
+    </div>
   </div>
 
-  <div id="bottom" class="panel">
+  <div id="right">
+    <div class="panel log-panel"><h2>Combat Log</h2><div class="log" id="log"></div></div>
+    <div class="panel zones"><h2>Zones <span class="sub">slay each dragon</span></h2><div id="zones"></div></div>
+  </div>
+
+  <div id="bottom" class="panel collapsed">
+    <button class="act btn-settings" id="btn-settings" title="Settings, save, theme">⚙ Settings</button>
+    <button class="act" id="btn-density-toggle" title="Toggle layout density">⇲ Density</button>
     <button class="act" id="btn-export">Export Save</button>
     <button class="act" id="btn-import">Import Save</button>
     <button class="act danger" id="btn-reset">Hard Reset</button>
@@ -656,9 +813,7 @@ pre.map .trialBoss{color:var(--gold);font-weight:700}
       <option value="contrast">High Contrast</option>
     </select></label>
     <span class="sub">save = base64 JSON</span>
-  </div>
-  <div class="sub" style="width:100%;margin-top:6px">
-    By Joseph Jeffrey
+    <span class="author">By Joseph Jeffrey</span>
   </div>
 </div>
 
@@ -1725,6 +1880,13 @@ const G={
   spellMastery:{}, // {spellId: totalCasts} — survives Awakening (true meta progression)
   eclipseSeen:false,
   baseStats:{},
+  // Live rates dashboard — rolling 60-second window of gold/xp/kills/dmg events.
+  // Snapshots captured once per second in gameTick via recordRates().
+  rates:{goldDelta60:[],xpDelta60:[],killTimes60:[],dmgDealt60:[],
+         _lastSnapGold:0,_lastSnapXp:0,_lastSnapT:0,_windowStart:0},
+  // UI preferences (density, settings strip open state, last-saved wall-clock).
+  ui:{density:'comfortable',settingsOpen:false},
+  savedAt:0,    // wall-clock ms of last export — drives the "while you were away" modal
 };
 BUILDINGS.forEach(b=>G.buildings[b.id]=0);
 
@@ -1820,6 +1982,56 @@ function lockMsg(rankIdx){
   const r=RANKS[rankIdx];
   const togo=Math.max(0,r.lvl-G.hero.lvl);
   return `unlocks at ${r.name} (lvl ${r.lvl}) — you are lvl ${G.hero.lvl} · ${togo} to go`;
+}
+// ============================================================
+// IDLE-LOOP RATES — gold/sec, xp/sec, kills/min, DPS over a rolling 60s window
+// ============================================================
+// Cumulative XP earned across the run, including prior level rollovers. Used
+// to compute xp-per-second deltas without losing data when the hero levels up
+// between snapshots.
+function totalLifetimeXp(){
+  let t=0;
+  for(let l=1;l<G.hero.lvl;l++)t+=xpForLevel(l);
+  return t+G.hero.xp;
+}
+// Called once per real-world second from gameTick. Records positive deltas in
+// gold and XP (spending and prestige resets don't count as negative income)
+// and prunes events older than 60s.
+function recordRates(){
+  const now=Date.now();
+  const cutoff=now-60000;
+  const r=G.rates;
+  if(!r._windowStart)r._windowStart=now;
+  const xp=totalLifetimeXp();
+  const dG=G.gold-r._lastSnapGold;
+  const dX=xp-r._lastSnapXp;
+  if(dG>0)r.goldDelta60.push({t:now,amt:dG});
+  if(dX>0)r.xpDelta60.push({t:now,amt:dX});
+  r._lastSnapGold=G.gold;
+  r._lastSnapXp=xp;
+  r._lastSnapT=now;
+  r.goldDelta60=r.goldDelta60.filter(s=>s.t>cutoff);
+  r.xpDelta60=r.xpDelta60.filter(s=>s.t>cutoff);
+  r.killTimes60=r.killTimes60.filter(t=>t>cutoff);
+  r.dmgDealt60=r.dmgDealt60.filter(s=>s.t>cutoff);
+}
+// Convenience: derive per-second / per-minute readouts from the rolling window.
+// Uses min(60s, since-window-start) so freshly-started sessions don't divide
+// by a synthetic 60.
+function currentRates(){
+  const r=G.rates;
+  const now=Date.now();
+  const sec=Math.max(1,Math.min(60,(now-r._windowStart)/1000));
+  const goldSum=r.goldDelta60.reduce((s,e)=>s+e.amt,0);
+  const xpSum=r.xpDelta60.reduce((s,e)=>s+e.amt,0);
+  const dmgSum=r.dmgDealt60.reduce((s,e)=>s+e.amt,0);
+  return {
+    goldPerSec:goldSum/sec,
+    xpPerSec:xpSum/sec,
+    killsPerMin:(r.killTimes60.length/sec)*60,
+    dps:dmgSum/sec,
+    windowSec:sec|0,
+  };
 }
 const isAutoBrew=()=>G.hero.lvl>=RANKS[5].lvl;               // Magus (lvl 36)
 // Alchemy: skill curve, slot count, quality roll, immunity check.
@@ -3117,6 +3329,7 @@ function castSpell(sp,target){
   if(isBlood&&isUndead&&!undeadFix){dmg*=BLOOD_VS_UNDEAD_MUL;bloodSuppressed=true;}
   dmg=Math.floor(dmg);
   target.hp-=dmg;
+  G.rates.dmgDealt60.push({t:Date.now(),amt:dmg});
   if(sp.dot)target.dotTimers.push({dps:sp.dot.dps*elBoost*(bloodSuppressed?BLOOD_VS_UNDEAD_MUL:1),remaining:sp.dot.dur});
   let leechRatio=sp.leech||0;
   if(isBlood&&!bloodSuppressed)leechRatio+=BLOOD_LEECH_BASE;
@@ -3181,6 +3394,7 @@ function onEnemyDead(e){
   const gold=Math.ceil(e.ref.gold*s.goldFind*rm);
   const xp=Math.ceil(e.ref.xp*s.xpMul*rm);
   G.gold+=gold;G.hero.xp+=xp;
+  G.rates.killTimes60.push(Date.now());
   G.loot.push({x:e.x,y:e.y,ttl:8,name:e.ref.name,gold,xp});
   logLine(`Slain: ${e.ref.name}. +${fmtG(gold)} +${fmt(xp)}xp`,'loot');
   if(Math.random()<0.4){G.materials.dust+=1+ri(0,G.zoneIdx+1);}
@@ -3818,7 +4032,10 @@ function buyAwakening(id){
 // IDLE
 // ============================================================
 function applyIdle(seconds){
-  if(seconds<=0)return;
+  // Returns a summary {seconds, gold, xp, passiveGold, materials:{}} so callers
+  // (importSave) can surface a "while you were away" modal — and so the data
+  // can be inspected rather than only landing in the log.
+  if(seconds<=0)return null;
   seconds=Math.min(seconds,IDLE_CAP_HOURS*3600);
   const Z=ZONES[G.zoneIdx];
   const avg=Z.enemies.reduce((a,e)=>({gold:a.gold+e.gold,xp:a.xp+e.xp,hp:a.hp+e.hp}),{gold:0,xp:0,hp:0});
@@ -3830,14 +4047,45 @@ function applyIdle(seconds){
   const gold=Math.floor(kills*avg.gold*G.baseStats.goldFind);
   const xp=Math.floor(kills*avg.xp*G.baseStats.xpMul);
   const passiveGold=Math.floor((G.baseStats.goldPerSec||0)*seconds);
+  const matsGained={};
   for(const g of GOLEM_TYPES){
     const lv=G.golems[g.id]||0;
     if(lv===0)continue;
-    G.materials[g.yields]+=g.rate*lv*seconds;
+    const yield_=g.rate*lv*seconds;
+    G.materials[g.yields]=(G.materials[g.yields]||0)+yield_;
+    matsGained[g.yields]=(matsGained[g.yields]||0)+yield_;
   }
   G.gold+=gold+passiveGold;G.hero.xp+=xp;
   checkLevelUp();
   if(gold+xp+passiveGold>0)logLine(`AFK ${fmtTime(seconds)}: +${fmtG(gold+passiveGold)}, +${fmt(xp)}xp + golem materials`,'loot');
+  return {seconds,gold:gold+passiveGold,xp,kills:Math.floor(kills),materials:matsGained};
+}
+// "While you were away" modal — shown after importing a save that's been idle
+// for > 60s. Surfaces offline gains visually rather than burying them in the
+// log scrollback, which is the genre's standard retention lever.
+function showOfflineGains(summary){
+  if(!summary||summary.seconds<60)return;
+  const wrap=document.createElement('div');
+  wrap.className='modal-bg';
+  wrap.onclick=e=>{if(e.target===wrap)wrap.remove();};
+  const card=document.createElement('div');
+  card.className='modal';
+  const mats=Object.entries(summary.materials).filter(([_,v])=>v>0)
+    .map(([k,v])=>`<div class="gain"><span class="lbl">${k}</span><span class="v">+${fmt(Math.floor(v))}</span></div>`).join('');
+  card.innerHTML=`<h3>✦ While You Were Away</h3>
+    <div class="sub" style="margin-bottom:8px">Idle: ${fmtTime(summary.seconds)} (capped at ${IDLE_CAP_HOURS}h)</div>
+    <div class="afk-summary">
+      <div class="gain"><span class="lbl">Gold</span><span class="v">+${fmtG(summary.gold)}</span></div>
+      <div class="gain"><span class="lbl">XP</span><span class="v">+${fmt(summary.xp)}</span></div>
+      <div class="gain"><span class="lbl">Est. kills</span><span class="v">${fmt(summary.kills)}</span></div>
+      ${mats}
+    </div>
+    <div style="margin-top:10px;text-align:right">
+      <button class="act" id="afk-close">Continue</button>
+    </div>`;
+  wrap.appendChild(card);
+  document.body.appendChild(wrap);
+  card.querySelector('#afk-close').onclick=()=>wrap.remove();
 }
 
 // ============================================================
@@ -3900,6 +4148,7 @@ function exportSave(){
     uiInvSort:G.uiInvSort,
     spellMastery:G.spellMastery,
     gearIdCounter:GEAR_ID_COUNTER,
+    ui:G.ui,
     savedAt:Date.now(),
   };
   return utf8ToB64(JSON.stringify(d));
@@ -3990,6 +4239,12 @@ function importSave(str){
     G.theme=d.theme||G.theme||'dark';
     applyTheme(G.theme);
     if($('theme-select'))$('theme-select').value=G.theme;
+    G.ui={density:'comfortable',settingsOpen:false,zonesExpanded:false,...(d.ui||{})};
+    document.body.classList.toggle('compact',G.ui.density==='compact');
+    // Reset rolling rates window — offline gains shouldn't dominate the first
+    // minute of post-import rates display.
+    G.rates={goldDelta60:[],xpDelta60:[],killTimes60:[],dmgDealt60:[],
+             _lastSnapGold:G.gold,_lastSnapXp:0,_lastSnapT:Date.now(),_windowStart:Date.now()};
     if(d.gearIdCounter)GEAR_ID_COUNTER=Math.max(GEAR_ID_COUNTER,d.gearIdCounter);
     recomputeStats();
     G.hero.hp=d.hero?.hp??G.hero.maxHp;
@@ -3997,8 +4252,9 @@ function importSave(str){
     G.hero.alive=true;G.hero.respawnIn=0;
     genMap();
     const elapsed=Math.floor((Date.now()-(d.savedAt||Date.now()))/1000);
-    applyIdle(elapsed);
+    const summary=applyIdle(elapsed);
     logLine('Save imported.','sys');
+    if(summary&&summary.seconds>=60)showOfflineGains(summary);
     return true;
   }catch(e){logLine('Import failed: '+e.message,'die');return false;}
 }
@@ -4172,13 +4428,33 @@ function renderMap(){
 }
 function renderTop(){
   const r=currentRank(),nx=nextRank();
+  const rates=currentRates();
   $('r-rank').textContent=r.name;
+  $('r-rank').title=rankTooltip();
   $('r-lvl').textContent=G.hero.lvl;
   $('r-xp').textContent=`${fmt(G.hero.xp)}/${fmt(xpForLevel(G.hero.lvl))}`;
   $('r-gold').textContent=fmt(G.gold);
   $('r-mana').textContent=`${Math.floor(G.hero.mana)}/${G.hero.maxMana}`;
   $('r-spark').textContent=fmt(G.spark);
-  $('r-tick').textContent=`tick: ${G.tick}`+(nx?` · next rank @ lvl ${nx.lvl}`:' · max');
+  // Inline /sec chips next to gold and XP — the idle heartbeat the genre runs on
+  const gps=$('r-gold-rate'),xps=$('r-xp-rate');
+  if(gps){gps.textContent=`+${fmt(Math.round(rates.goldPerSec))}/s`;gps.classList.toggle('zero',rates.goldPerSec<1);}
+  if(xps){xps.textContent=`+${fmt(Math.round(rates.xpPerSec))}/s`;xps.classList.toggle('zero',rates.xpPerSec<1);}
+  // The old tick counter is replaced with a more useful AFK summary — kills/min
+  // and DPS if active, falling back to rank progress otherwise.
+  let tickInfo;
+  if(rates.killsPerMin>0)tickInfo=`▶ ${Math.round(rates.killsPerMin)} kills/min · ${fmt(Math.round(rates.dps))} dps`;
+  else tickInfo=nx?`Next rank: ${nx.name} (lvl ${nx.lvl} · ${nx.lvl-G.hero.lvl} to go)`:'Max rank';
+  $('r-tick').textContent=tickInfo;
+  // Status chips in the second row: buffs count, ailments count, auto-explore state
+  const buffCount=G.buffs.length, ailCount=(G.hero.ailments||[]).length;
+  const sb=$('status-buffs');if(sb){sb.style.display=buffCount?'inline-flex':'none';$('buff-count').textContent=buffCount;}
+  const sa=$('status-ailments');if(sa){sa.style.display=ailCount?'inline-flex':'none';$('ailment-count').textContent=ailCount;}
+  const ae=$('autoexp-state');if(ae){ae.textContent=G.autoExplore?'ON':'OFF';
+    $('status-autoexp').classList.toggle('good',!!G.autoExplore);}
+  // Materials live up here too so dust/crystal/gem/herb are visible on every tab
+  const mt=$('mat-strip-top');if(mt)mt.innerHTML=matStripHTML();
+  // Zone-pane title + subhead
   const Z=ZONES[G.zoneIdx];
   const titleLabel=G.inDungeon?'TREASURE DUNGEON':G.trial.inTrial?`TRIALS · Floor ${G.trial.floor}`:`${Z.name} (lvl ${Z.lvl}+)`;
   $('zone-title').textContent=titleLabel;
@@ -4186,6 +4462,126 @@ function renderTop(){
   if(G.inDungeon)$('kills-sub').textContent=`${lc} chests · ${Math.ceil(G.dungeonTimeLeft)}s`;
   else if(G.trial.inTrial)$('kills-sub').textContent=`Best F${G.trial.bestFloor} · ${G.trial.essence}◆ · Tier ${G.awakenCount}`;
   else $('kills-sub').textContent=`${G.kills}/${Z.killsToBoss}`+(G.bossActive?' • DRAGON':'')+(lc?` · ${lc} chest${lc>1?'s':''}`:'');
+}
+// ============================================================
+// IDLE DASHBOARD RENDERS — rates / next-up / target intel / spell hotbar
+// ============================================================
+function renderRates(){
+  const r=currentRates();
+  const fmtRate=(v,suffix='/s')=>`${fmt(Math.round(v))}${suffix}`;
+  const rows=[
+    ['gold',         fmtRate(r.goldPerSec),    r.goldPerSec>0],
+    ['xp',           fmtRate(r.xpPerSec),      r.xpPerSec>0],
+    ['kills /min',   fmtRate(r.killsPerMin,''),r.killsPerMin>0],
+    ['dps',          fmtRate(r.dps,''),        r.dps>0],
+    ['mana regen',   `${(G.baseStats.manaRegen||0).toFixed(1)}/s`,(G.baseStats.manaRegen||0)>0],
+    ['g/sec idle',   `${fmt(G.baseStats.goldPerSec||0)}/s`, (G.baseStats.goldPerSec||0)>0],
+  ];
+  $('rates-grid').innerHTML=rows.map(([lbl,v,active])=>
+    `<div class="row"><span class="lbl">${lbl}</span><span class="v ${active?'gain':'zero'}">${v}</span></div>`
+  ).join('');
+  $('rates-window-lbl').textContent=`last ${r.windowSec}s`;
+}
+function renderNextUp(){
+  // The "what's coming" surface — collects near-term goals across the game's
+  // systems so a player doesn't have to tab around to figure out next steps.
+  const items=[];
+  const nx=nextRank();
+  if(nx){
+    const togo=nx.lvl-G.hero.lvl;
+    items.push({icn:'▲',lbl:`Next rank: <b>${nx.name}</b><span class="sub">${nx.perks.join(' · ')}</span>`,
+                toGo:`${togo} lvl${togo===1?'':'s'}`,ready:togo<=0});
+  }
+  // Next zone unlock — uses G.unlocked + ZONES table
+  for(let i=G.unlocked+1;i<ZONES.length;i++){
+    const z=ZONES[i];
+    if(!z)break;
+    const togo=Math.max(0,z.lvl-G.hero.lvl);
+    items.push({icn:'🗺',lbl:`Next zone: <b>${z.name}</b><span class="sub">lvl ${z.lvl}+ · ${z.boss.name}</span>`,
+                toGo:togo===0?'UNLOCK READY':`${togo} lvl${togo===1?'':'s'}`,ready:togo===0});
+    break;
+  }
+  // Next boss progress in current zone
+  if(!G.inDungeon&&!G.trial.inTrial){
+    const Z=ZONES[G.zoneIdx];const togo=Math.max(0,Z.killsToBoss-G.kills);
+    if(togo>0)items.push({icn:'⚔',lbl:`Boss spawn: <b>${Z.boss.name}</b>`,toGo:`${togo} kills`,ready:false});
+    else if(G.bossActive)items.push({icn:'⚔',lbl:`<b>${Z.boss.name}</b> awaits`,toGo:'DRAGON',ready:true});
+  }
+  // Next alchemy lvl
+  if(isAlchemyUnlocked()&&G.alchemy.lvl<ALCHEMY_LVL_CAP){
+    const need=xpForAlchemyLevel(G.alchemy.lvl+1);const have=G.alchemy.xp;
+    items.push({icn:'⚗',lbl:`Alchemy Lv <b>${G.alchemy.lvl+1}</b><span class="sub">${G.alchemy.lvl+1===100?'perfect brews unlock':((G.alchemy.lvl+1)%25===0?'+1 brew slot':'+ recipes')}</span>`,
+                toGo:`${fmt(need-have)} xp`,ready:false});
+  }
+  // Next research project
+  if(isResearchUnlocked()&&G.researchActive){
+    const ra=G.researchActive;
+    items.push({icn:'🔮',lbl:`Researching: <b>${ra.id}</b>`,toGo:`${Math.ceil(ra.timeLeft)}s`,ready:false});
+  }
+  // Current trial floor if active
+  if(G.trial.inTrial)items.push({icn:'◆',lbl:`Trial Floor <b>${G.trial.floor}</b>`,toGo:`best F${G.trial.bestFloor}`,ready:false});
+  if(items.length===0)items.push({icn:'·',lbl:'<span class="sub">nothing imminent — explore!</span>',toGo:'',ready:false});
+  $('nextup-list').innerHTML=items.slice(0,6).map(it=>
+    `<div class="nextup-row ${it.ready?'ready':''}">
+      <span class="icn">${it.icn}</span>
+      <span class="lbl">${it.lbl}</span>
+      <span class="to-go">${it.toGo}</span>
+    </div>`
+  ).join('');
+}
+function renderTargetIntel(){
+  const e=G.enemy;
+  if(!e){
+    $('target-intel').innerHTML=`<div class="empty">no engagement — auto-explore searching${G.autoExplore?'…':' (paused)'}</div>`;
+    $('target-status').textContent=G.inDungeon?'dungeon':'idle';
+    return;
+  }
+  $('target-status').textContent=e.isBoss?'BOSS':'in combat';
+  const pct=Math.max(0,e.hp/e.maxHp*100);
+  const ref=e.ref;
+  // Affinity matchups — show how every element our hero can cast resolves
+  // against this target's element, so the player can pick the right spell.
+  const muHtml=Object.keys(EL_INFO).map(el=>{
+    if(!isArcaneUnlocked()&&el==='arcane')return '';
+    const m=elMul(el,ref.el);
+    const cls=m>1.05?'strong':m<0.95?'weak':'';
+    if(!cls)return '';
+    return `<span class="mu ${cls}" title="${el} → ${ref.el}: ×${m.toFixed(2)}">${EL_INFO[el].glyph} ${el.slice(0,3)}</span>`;
+  }).filter(Boolean).join('');
+  // Drop preview — gold/xp at this moment with current find/mul modifiers
+  const s=G.baseStats,rm=s.rewardMul||1;
+  const goldExp=Math.ceil(ref.gold*s.goldFind*rm);
+  const xpExp=Math.ceil(ref.xp*s.xpMul*rm);
+  $('target-intel').innerHTML=`
+    <div class="head">
+      <span><span class="glyph">${ref.glyph}</span> <span class="nm">${ref.name}</span></span>
+      <span class="lvl">${e.isBoss?'★ DRAGON':'mob'}</span>
+    </div>
+    <div><span class="el-tag" style="color:var(--el-${ref.el})">${EL_INFO[ref.el].glyph} ${ref.el}</span>
+         <span class="sub">atk ${ref.atk} · spd ${ref.spd.toFixed(2)}</span></div>
+    <div class="bar"><span style="width:${pct}%;background:var(--mob)"></span>
+         <div class="txt">${Math.max(0,Math.ceil(e.hp))}/${e.maxHp} HP</div></div>
+    ${muHtml?`<div class="matchups">${muHtml}</div>`:''}
+    <div class="drops">drops: +${fmtG(goldExp)} · +${fmt(xpExp)} xp${ref.tags?.length?' · '+ref.tags.join(', '):''}</div>
+  `;
+}
+function renderSpellHotbar(){
+  const hb=$('spell-hotbar');if(!hb)return;
+  const cap=maxSpellSlots();
+  let html='';
+  for(let i=0;i<cap;i++){
+    const id=G.equippedSpells[i];
+    const sp=id?SPELLS.find(x=>x.id===id):null;
+    if(!sp){html+=`<div class="hk empty"><span class="idx">${i+1}</span><span class="gly">·</span><span class="cdtxt">empty</span></div>`;continue;}
+    const cd=G.spellCd[sp.id]||0;
+    const ready=cd<=0&&G.hero.mana>=sp.cost;
+    html+=`<div class="hk ${ready?'ready':'cd'}" title="${sp.name} — cost ${sp.cost} mana · cd ${sp.cd}s">
+      <span class="idx">${i+1}</span>
+      <span class="gly">${EL_INFO[sp.element].glyph}</span>
+      <span class="cdtxt">${ready?'READY':cd.toFixed(1)+'s'}</span>
+    </div>`;
+  }
+  hb.innerHTML=html;
 }
 let _lastStatsHash='';
 function renderHero(){
@@ -4237,24 +4633,31 @@ function renderHero(){
   // Layer-2 visual cue: hero panel pulses red whenever any ailment is active.
   const hp=$('hero-panel');
   if(hp)hp.classList.toggle('ailing',(G.hero.ailments||[]).length>0);
-  // Stats grid only changes on level up / building / research / awakening / gear
-  // — skip the innerHTML rebuild when nothing meaningful changed.
-  const sh=`${s.atk.toFixed(1)}|${s.def}|${s.spd.toFixed(2)}|${s.manaRegen.toFixed(1)}|${s.crit.toFixed(2)}|${s.cdmg.toFixed(2)}|${s.dmgMul.toFixed(2)}|${s.goldFind.toFixed(2)}|${s.xpMul.toFixed(2)}|${s.researchSpeed.toFixed(2)}|${(s.goldPerSec||0)}|${(s.chestBonus||0)}`;
+  // Stats grid: sectioned (Combat / Idle), 3-column, with defaults dimmed so
+  // the eye locks onto stats the player has actually built up.
+  const sh=`${s.atk.toFixed(1)}|${s.def}|${s.spd.toFixed(2)}|${s.manaRegen.toFixed(1)}|${s.crit.toFixed(2)}|${s.cdmg.toFixed(2)}|${s.dmgMul.toFixed(2)}|${s.goldFind.toFixed(2)}|${s.xpMul.toFixed(2)}|${s.researchSpeed.toFixed(2)}|${(s.goldPerSec||0)}|${(s.chestBonus||0)}|${(s.elXpMul||1).toFixed(2)}|${(s.ritualMul||1).toFixed(2)}`;
   if(sh===_lastStatsHash)return;
   _lastStatsHash=sh;
+  // A stat is "at baseline" when it matches the spec value (×1.00, +0, etc).
+  // dim() marks the row so its label and value both fade out 60%.
+  const dim=(isDefault)=>isDefault?' dim':'';
   $('stats').innerHTML=`
-    <div><span class="k">ATK</span><span class="v">${Math.floor(s.atk)}</span></div>
-    <div><span class="k">DEF</span><span class="v">${Math.floor(s.def)}</span></div>
-    <div><span class="k">SPD</span><span class="v">${s.spd.toFixed(2)}</span></div>
-    <div><span class="k">Mana Regen</span><span class="v">${s.manaRegen.toFixed(1)}/s</span></div>
-    <div><span class="k">Crit</span><span class="v">${(s.crit*100).toFixed(0)}%</span></div>
-    <div><span class="k">CritDmg</span><span class="v">${(s.cdmg*100).toFixed(0)}%</span></div>
-    <div><span class="k">Dmg Mult</span><span class="v">×${s.dmgMul.toFixed(2)}</span></div>
-    <div><span class="k">Gold Find</span><span class="v">×${s.goldFind.toFixed(2)}</span></div>
-    <div><span class="k">XP Mult</span><span class="v">×${s.xpMul.toFixed(2)}</span></div>
-    <div><span class="k">Research</span><span class="v">×${s.researchSpeed.toFixed(2)}</span></div>
-    <div><span class="k">G/sec</span><span class="v">${(s.goldPerSec||0).toFixed(0)}</span></div>
-    <div><span class="k">Chests</span><span class="v">+${s.chestBonus||0}</span></div>
+    <div class="section">Combat</div>
+    <div${dim(false)}><span class="lbl">ATK</span><span class="v">${Math.floor(s.atk)}</span></div>
+    <div${dim(false)}><span class="lbl">DEF</span><span class="v">${Math.floor(s.def)}</span></div>
+    <div${dim(false)}><span class="lbl">SPD</span><span class="v">${s.spd.toFixed(2)}</span></div>
+    <div${dim(false)}><span class="lbl">Crit</span><span class="v">${(s.crit*100).toFixed(0)}%</span></div>
+    <div${dim(s.cdmg===1.5)}><span class="lbl">Crit Dmg</span><span class="v">${(s.cdmg*100).toFixed(0)}%</span></div>
+    <div${dim(s.dmgMul===1)}><span class="lbl">Dmg Mult</span><span class="v">×${s.dmgMul.toFixed(2)}</span></div>
+    <div class="section">Idle &amp; Economy</div>
+    <div${dim(false)}><span class="lbl">Mana Regen</span><span class="v">${s.manaRegen.toFixed(1)}/s</span></div>
+    <div${dim(s.goldFind===1)}><span class="lbl">Gold Find</span><span class="v">×${s.goldFind.toFixed(2)}</span></div>
+    <div${dim(s.xpMul===1)}><span class="lbl">XP Mult</span><span class="v">×${s.xpMul.toFixed(2)}</span></div>
+    <div${dim((s.elXpMul||1)===1)}><span class="lbl">El XP Mult</span><span class="v">×${(s.elXpMul||1).toFixed(2)}</span></div>
+    <div${dim(s.researchSpeed===1)}><span class="lbl">Research</span><span class="v">×${s.researchSpeed.toFixed(2)}</span></div>
+    <div${dim((s.ritualMul||1)===1)}><span class="lbl">Ritual</span><span class="v">×${(s.ritualMul||1).toFixed(2)}</span></div>
+    <div${dim((s.goldPerSec||0)===0)}><span class="lbl">G/sec idle</span><span class="v">${(s.goldPerSec||0).toFixed(0)}</span></div>
+    <div${dim((s.chestBonus||0)===0)}><span class="lbl">Chests</span><span class="v">+${s.chestBonus||0}</span></div>
   `;
 }
 function renderLog(){
@@ -4268,23 +4671,43 @@ function renderLog(){
   el.scrollTop=el.scrollHeight;
 }
 function renderZones(){
-  $('zones').innerHTML=ZONES.map((z,i)=>{
+  // Show unlocked zones + the next locked one as a teaser. Anything beyond the
+  // teaser is folded into a single "▸ N more zones locked" row that the player
+  // can click to expand — keeps the right column from being a wall of teasers.
+  const teaserIdx=G.unlocked+1;
+  const showThrough=G.ui?.zonesExpanded?ZONES.length-1:Math.min(teaserIdx,ZONES.length-1);
+  const visible=ZONES.slice(0,showThrough+1);
+  const hiddenLocked=ZONES.length-1-showThrough;
+  const next=ZONES[teaserIdx];
+  let html=visible.map((z,i)=>{
     const locked=i>G.unlocked,active=i===G.zoneIdx;
     return `<button data-z="${i}" class="${active?'active':''}" ${locked||G.inDungeon||G.trial.inTrial?'disabled':''}>
       ${locked?'[locked] ':''}${z.name}
-      <div class="meta">lvl ${z.lvl}+ · ${z.killsToBoss} → ${z.boss.name}</div>
+      <div class="meta">lvl ${z.lvl}+ · ${z.killsToBoss} → ${z.boss.name}${locked&&next===z?` · ${Math.max(0,z.lvl-G.hero.lvl)} lvl to go`:''}</div>
     </button>`;
   }).join('');
-  $('zones').querySelectorAll('button').forEach(b=>{
+  if(hiddenLocked>0){
+    html+=`<button class="zone-locked-fold" data-zones-toggle="1">
+      ▸ <span class="ct">${hiddenLocked}</span> more zone${hiddenLocked===1?'':'s'} locked · click to ${G.ui?.zonesExpanded?'collapse':'reveal'}
+    </button>`;
+  } else if(G.ui?.zonesExpanded){
+    html+=`<button class="zone-locked-fold" data-zones-toggle="1">▾ collapse list</button>`;
+  }
+  $('zones').innerHTML=html;
+  $('zones').querySelectorAll('button[data-z]').forEach(b=>{
     b.onclick=()=>{gotoZone(parseInt(b.dataset.z));renderAll();};
   });
+  const fold=$('zones').querySelector('[data-zones-toggle]');
+  if(fold)fold.onclick=()=>{G.ui=G.ui||{};G.ui.zonesExpanded=!G.ui.zonesExpanded;renderZones();};
 }
-function renderRankInfo(){
+function rankTooltip(){
+  // Hover summary attached to the RANK chip in the top bar. Replaces the
+  // dedicated Mage Rank panel that used to live in the right column.
   const r=currentRank(),nx=nextRank();
-  let html=`<div><span class="title">${r.name}</span></div><div class="sub">${r.perks.join(' · ')}</div>`;
-  if(nx)html+=`<div class="sub" style="margin-top:6px">Next: <b>${nx.name}</b> at lvl ${nx.lvl} — ${nx.perks.join(' · ')}</div>`;
-  else html+=`<div class="sub" style="margin-top:6px">Maximum rank.</div>`;
-  $('rank-info').innerHTML=html;
+  let s=`${r.name} — ${r.perks.join(' · ')}`;
+  if(nx)s+=`\nNext: ${nx.name} at lvl ${nx.lvl} (${r.perks===nx.perks?'':nx.perks.join(' · ')})`;
+  else s+=`\nMaximum rank.`;
+  return s;
 }
 function renderSpellSlots(){
   const cap=maxSpellSlots();
@@ -5617,13 +6040,14 @@ function renderActivePane(){
   }
 }
 function renderHot(){
-  // Live state — every tick. Bars and map need 4Hz responsiveness.
-  renderTop();renderLog();
+  // Live state — every tick. Bars, map, and the target intel panel all need
+  // 4Hz responsiveness since they reflect in-combat state.
+  renderTop();renderLog();renderTargetIntel();renderSpellHotbar();
   if(activeTab==='world'){renderMap();renderHero();}
 }
 function renderCold(){
   // Heavier panels — every other tick (500ms) is plenty.
-  renderZones();renderRankInfo();renderActivePane();
+  renderZones();renderRates();renderNextUp();renderActivePane();
 }
 function renderAll(){renderHot();renderCold();}
 
@@ -5665,6 +6089,8 @@ function gameTick(){
   G.chests=G.chests.filter(c=>!c.opened||(c.openedTtl||0)>0);
   // Passive systems
   tickGolems();tickResearch();tickRitual();tickBrew();tickAutoConsume();
+  // Roll the idle-rates window forward once per real-world second (TICK_S=0.25).
+  if(G.tick%4===0)recordRates();
   // Render — hot every tick, cold every 2nd tick (skipped briefly after mousedown
   // on controls so innerHTML rebuilds don't destroy buttons mid-click)
   renderHot();
@@ -5778,6 +6204,18 @@ function bindEvents(){
     if(!confirm('Are you absolutely sure?'))return;
     location.reload();
   };
+  // Settings strip tucks behind ⚙ — collapsed by default so the bottom bar
+  // is one button at rest. Save/import/theme/reset all hide under one click.
+  $('btn-settings').onclick=()=>{
+    const b=$('bottom');b.classList.toggle('collapsed');
+    G.ui=G.ui||{};G.ui.settingsOpen=!b.classList.contains('collapsed');
+  };
+  // Density toggle — comfortable (default) ⇆ compact tightens padding everywhere
+  $('btn-density-toggle').onclick=()=>{
+    G.ui=G.ui||{};G.ui.density=(G.ui.density==='compact')?'comfortable':'compact';
+    document.body.classList.toggle('compact',G.ui.density==='compact');
+    logLine(`Density: ${G.ui.density}.`,'sys');
+  };
   $('theme-select').value=G.theme||'dark';
   $('theme-select').onchange=e=>{applyTheme(e.target.value);};
   $('inv-sort').value=G.uiInvSort||'rarity';
@@ -5822,6 +6260,12 @@ function init(){
   applyTheme(G.theme||'dark');
   recomputeStats();
   G.hero.hp=G.hero.maxHp;G.hero.mana=G.hero.maxMana;
+  // Seed the rates window so the first second of play doesn't read +Ngold/s
+  // worth of starting cash, and apply any saved density preference.
+  G.rates._lastSnapGold=G.gold;
+  G.rates._lastSnapXp=totalLifetimeXp();
+  G.rates._lastSnapT=G.rates._windowStart=Date.now();
+  document.body.classList.toggle('compact',G.ui?.density==='compact');
   genMap();
   bindEvents();
   renderBgArt();
