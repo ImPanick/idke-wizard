@@ -728,6 +728,33 @@ kbd{font-size:10px;padding:2px 4px}
 .target-intel{gap:10px;font-size:11px}
 .target-intel .head .nm{font-size:13px;letter-spacing:0}
 .target-intel .empty{font-style:normal;text-align:left;padding:2px 0;line-height:1.7}
+.enemy-conditions{display:flex;flex-direction:column;gap:7px;border-top:1px dashed var(--border);padding-top:9px}
+.enemy-condition .condition-head{display:flex;justify-content:space-between;gap:8px;font-size:10px}
+.enemy-condition .condition-name{color:var(--hi)}
+.enemy-condition.burning .condition-name{color:var(--el-fire)}
+.enemy-condition.chilled .condition-name,.enemy-condition.soaked .condition-name{color:var(--el-water)}
+.enemy-condition.fractured .condition-name{color:var(--el-earth)}
+.enemy-condition .condition-time{color:var(--fg);white-space:nowrap}
+.enemy-condition .condition-description{color:var(--dim);font-size:10px;line-height:1.5;margin-top:2px}
+.guard-readiness{border:1px dashed var(--border);padding:7px 8px;color:var(--dim);font-size:10px;line-height:1.6}
+.guard-readiness.ready{color:var(--hi2);border-color:var(--hi2)}
+.casting-note{margin:0 0 14px;font-size:11px;color:var(--dim);line-height:1.75}
+.casting-note strong{color:var(--fg);font-weight:500}
+.reaction-guide-intro{font-size:11px;color:var(--dim);line-height:1.75;margin:0 0 14px}
+.reaction-cards{display:flex;flex-direction:column;gap:14px}
+.reaction-card{padding-top:13px;border-top:1px dashed var(--border)}
+.reaction-card:first-child{border-top:0;padding-top:0}
+.reaction-card h3{font-size:12px;font-weight:500;margin:0 0 5px;color:var(--hi)}
+.reaction-card .recipe{font-size:11px;color:var(--fg);margin:0 0 5px;line-height:1.65}
+.reaction-card p{margin:0 0 6px;font-size:11px;line-height:1.7;color:var(--dim)}
+.reaction-loadout{padding:7px 9px;border-left:2px solid var(--border);background:var(--bg);font-size:10px;line-height:1.7;color:var(--dim)}
+.reaction-loadout .pair{color:var(--fg)}
+.reaction-loadout .available{color:var(--hi2)}
+.slot .spell-slot-copy{display:flex;flex-direction:column;gap:3px;min-width:0}
+.slot .slot-description{font-size:10px;font-weight:400;color:var(--dim);line-height:1.6}
+.slot .slot-actions{display:flex;flex-wrap:nowrap;gap:4px;margin-left:auto}
+.slot .slot-actions button{min-width:28px;flex:none}
+@media(max-width:480px){.slot{flex-wrap:wrap}.slot .spell-slot-copy{flex-basis:calc(100% - 34px)}.slot .slot-actions{padding-left:26px;width:100%;margin-left:0}.reaction-loadout{overflow-wrap:anywhere}}
 .rates-grid{gap:6px 12px;grid-template-columns:1fr 1fr}
 .rates-grid .row{font-size:10px;padding:4px 0;display:flex;gap:4px;align-items:baseline;flex-wrap:wrap}
 .rates-grid .row .lbl{width:100%;font-size:9px}
@@ -931,7 +958,7 @@ body.compact .building-row,body.compact .inv-item,body.compact .spell-row{paddin
         <div class="map-key" aria-label="Map legend"><span><b>@</b> you</span><span class="enemy-key"><b>m</b> enemy</span><span class="loot-key"><b>$</b> loot</span><span class="loot-key"><b>?</b> chest</span><span><b id="map-wall-key">T</b> obstacle</span></div>
       </div>
       <div class="panel hero-panel" id="hero-panel">
-        <h2>Your wizard <span class="sub">spells cast from left to right</span></h2>
+        <h2>Your wizard <span class="sub">first ready spell has priority</span></h2>
         <div class="spell-hotbar" id="spell-hotbar"></div>
         <div class="bar"><span id="hp-fill"></span><div class="txt" id="hp-txt">HP 0/0</div></div>
         <div class="bar manabar"><span id="mana-fill"></span><div class="txt" id="mana-txt">Mana 0/0</div></div>
@@ -948,7 +975,17 @@ body.compact .building-row,body.compact .inv-item,body.compact .spell-row{paddin
       </details>
     </div>
     <div class="tab-pane" id="pane-spells">
-      <div class="panel"><h2>Equipped <span class="sub" id="spell-cap">0 / 3</span></h2><div id="spell-slots"></div></div>
+      <div class="panel">
+        <h2>Casting priority <span class="sub" id="spell-cap">0 / 3</span></h2>
+        <p class="casting-note">Each action casts the <strong>first ready, affordable spell</strong>, starting at slot 1. Cooldowns let later slots fire; this is a priority list, not a fixed sequence. Put a setup spell before its reaction partner.</p>
+        <div id="spell-slots"></div>
+      </div>
+      <details class="panel utility-fold" id="reaction-grimoire">
+        <summary><h2>Reaction field guide <span class="sub">3 ways to make spells work together</span></h2></summary>
+        <p class="reaction-guide-intro">Conditions on your target can change what the next spell does. Try the pairs below, then watch the Encounter panel. Reactions trigger from the main target only; splash and chain hits do not start more reactions.</p>
+        <p class="reaction-guide-intro">Nearby means within 3 horizontal/vertical map steps, with no wall or blocked corner in the way. A secondary kill leaves your current target engaged.</p>
+        <div class="reaction-cards" id="reaction-guide"></div>
+      </details>
       <div class="panel"><h2>Known Spells</h2><div id="known-spells"></div></div>
     </div>
     <div class="tab-pane" id="pane-elements">
@@ -1176,7 +1213,7 @@ function elMul(spellEl,enemyEl){
 // SPELLS -- 52 total
 // ============================================================
 const SPELLS=[
-  {id:'spark',name:'Spark',element:'fire',cost:4,dmg:8,cd:1.2,type:'damage',learnCost:0,desc:'Basic flame bolt.'},
+  {id:'spark',name:'Spark',element:'fire',cost:4,dmg:8,cd:1.2,type:'damage',learnCost:0,desc:'Ignites: 25% of damage dealt burns over 3s. Recasts refresh.',burn:{ratio:0.25,dur:3}},
   {id:'cinder',name:'Cinder',element:'fire',cost:6,dmg:14,cd:1.4,type:'damage',learnCost:50,desc:'Quick ember.'},
   {id:'firebolt',name:'Firebolt',element:'fire',cost:10,dmg:22,cd:2.5,type:'damage',learnCost:120,desc:'Flame projectile.'},
   {id:'fireball',name:'Fireball',element:'fire',cost:18,dmg:45,cd:3.5,type:'damage',learnCost:450,desc:'Bursting orb.'},
@@ -1184,36 +1221,36 @@ const SPELLS=[
   {id:'inferno',name:'Inferno',element:'fire',cost:30,dmg:70,cd:8,type:'damage',learnCost:1500,desc:'Burns 4s.',dot:{dps:6,dur:4}},
   {id:'meteor',name:'Meteor',element:'fire',cost:50,dmg:160,cd:14,type:'damage',learnCost:5500,desc:'Falling rock of flame.'},
   {id:'pyroclasm',name:'Pyroclasm',element:'fire',cost:80,dmg:280,cd:22,type:'damage',learnCost:22000,desc:'Ult: massive burn.',dot:{dps:30,dur:8}},
-  {id:'iceshard',name:'Ice Shard',element:'water',cost:8,dmg:16,cd:1.5,type:'damage',learnCost:100,desc:'Sharp shard.'},
+  {id:'iceshard',name:'Ice Shard',element:'water',cost:8,dmg:16,cd:1.5,type:'damage',learnCost:100,desc:'Chills for 4s: enemy attacks 40% slower. Earth can Shatter it.',condition:{id:'chilled',dur:4}},
   {id:'mend',name:'Mend',element:'water',cost:8,dmg:0,cd:4,type:'heal',learnCost:80,desc:'Heal 25+ (at least 8% max HP). Affinity improves healing.',heal:25},
   {id:'frostlance',name:'Frost Lance',element:'water',cost:12,dmg:18,cd:2.0,type:'damage',learnCost:200,desc:'Slows enemy.',stun:0.4},
   {id:'wellspring',name:'Wellspring',element:'water',cost:0,dmg:0,cd:12,type:'buff',learnCost:600,desc:'+5 mana regen / 8s.',buff:{stat:'manaRegen',amt:5,dur:8}},
   {id:'greaterheal',name:'Greater Heal',element:'water',cost:22,dmg:0,cd:8,type:'heal',learnCost:1100,desc:'Heal 90+ (at least 20% max HP). Affinity improves healing.',heal:90},
   {id:'glacialprison',name:'Glacial Prison',element:'water',cost:28,dmg:60,cd:10,type:'damage',learnCost:2000,desc:'Heavy slow.',stun:1.4},
-  {id:'tidalwave',name:'Tidal Wave',element:'water',cost:35,dmg:95,cd:7,type:'damage',learnCost:2600,desc:'Crushing wave.'},
+  {id:'tidalwave',name:'Tidal Wave',element:'water',cost:35,dmg:95,cd:7,type:'damage',learnCost:2600,desc:'Splashes 2 nearby foes for 40% damage. All hit are Soaked for 6s.',splash:{ratio:0.4,limit:2,radius:3},condition:{id:'soaked',dur:6}},
   {id:'stone',name:'Stoneblow',element:'earth',cost:14,dmg:32,cd:3.0,type:'damage',learnCost:240,desc:'Crushing blow.'},
   {id:'boulder',name:'Boulder',element:'earth',cost:24,dmg:70,cd:5,type:'damage',learnCost:1200,desc:'Hurled stone.'},
-  {id:'earthward',name:'Earthward',element:'earth',cost:16,dmg:0,cd:14,type:'buff',learnCost:480,desc:'+12 DEF / 10s.',buff:{stat:'def',amt:12,dur:10}},
+  {id:'earthward',name:'Earthward',element:'earth',cost:16,dmg:0,cd:14,type:'buff',learnCost:480,desc:'+12 DEF for 10s. Guards the next enemy hit, reducing it by 40%.',buff:{stat:'def',amt:12,dur:10},guard:0.4},
   {id:'petrify',name:'Petrify',element:'earth',cost:26,dmg:50,cd:12,type:'damage',learnCost:1700,desc:'Heavy slow.',stun:2.5},
-  {id:'quake',name:'Quake',element:'earth',cost:38,dmg:120,cd:8,type:'damage',learnCost:3400,desc:'Earth shakes.'},
+  {id:'quake',name:'Quake',element:'earth',cost:38,dmg:120,cd:8,type:'damage',learnCost:3400,desc:'Splashes 3 close foes for 45% damage. All hit lose 30% DEF for 6s.',splash:{ratio:0.45,limit:3,radius:2},condition:{id:'fractured',dur:6}},
   {id:'avalanche',name:'Avalanche',element:'earth',cost:70,dmg:240,cd:18,type:'damage',learnCost:14000,desc:'Crushing landslide.'},
   {id:'gust',name:'Gust',element:'air',cost:6,dmg:12,cd:1.0,type:'damage',learnCost:120,desc:'Quick wind blade.'},
   {id:'windslash',name:'Wind Slash',element:'air',cost:10,dmg:24,cd:1.5,type:'damage',learnCost:280,desc:'Razor wind.'},
   {id:'tempest',name:'Tempest',element:'air',cost:22,dmg:40,cd:5.0,type:'damage',learnCost:800,desc:'+0.4 SPD / 6s.',buff:{stat:'spd',amt:0.4,dur:6}},
-  {id:'lightningbolt',name:'Lightning Bolt',element:'air',cost:20,dmg:60,cd:3,type:'damage',learnCost:1500,desc:'Crackling strike.',critBonus:0.10},
-  {id:'chainlightning',name:'Chain Lightning',element:'air',cost:45,dmg:140,cd:7,type:'damage',learnCost:4500,desc:'Arcing bolts.',critBonus:0.15},
+  {id:'lightningbolt',name:'Lightning Bolt',element:'air',cost:20,dmg:60,cd:3,type:'damage',learnCost:1500,desc:'Lightning strike. Soaked targets trigger Conduct.',critBonus:0.10,lightning:true},
+  {id:'chainlightning',name:'Chain Lightning',element:'air',cost:45,dmg:140,cd:7,type:'damage',learnCost:4500,desc:'Jumps to 2 more foes for 55%, then 30% damage. Can trigger Conduct.',critBonus:0.15,lightning:true,chain:[0.55,0.30]},
   {id:'hurricane',name:'Hurricane',element:'air',cost:75,dmg:220,cd:16,type:'damage',learnCost:16000,desc:'Tearing winds.'},
   {id:'solarflash',name:'Solar Flash',element:'light',cost:9,dmg:20,cd:1.6,type:'damage',learnCost:220,desc:'Quick burst.'},
   {id:'searinglight',name:'Searing Light',element:'light',cost:18,dmg:28,cd:3.0,type:'damage',learnCost:360,desc:'+30% crit.',critBonus:0.30},
   {id:'sanctify',name:'Sanctify',element:'light',cost:20,dmg:0,cd:30,type:'buff',learnCost:1500,desc:'+30% dmg / 10s.',buff:{stat:'dmgMul',amt:0.30,dur:10}},
-  {id:'holysmite',name:'Holy Smite',element:'light',cost:32,dmg:90,cd:5,type:'damage',learnCost:2600,desc:'Pillar of light.',critBonus:0.20},
+  {id:'holysmite',name:'Holy Smite',element:'light',cost:32,dmg:90,cd:5,type:'damage',learnCost:2600,desc:'Judgment: +50% damage against foes at or below 30% HP.',critBonus:0.20,execute:{threshold:0.3,mul:1.5}},
   {id:'aegis',name:'Aegis',element:'light',cost:30,dmg:0,cd:28,type:'buff',learnCost:3800,desc:'+25 DEF / 12s.',buff:{stat:'def',amt:25,dur:12}},
   {id:'divinewrath',name:'Divine Wrath',element:'light',cost:70,dmg:240,cd:16,type:'damage',learnCost:15000,desc:'Ult: high crit.',critBonus:0.40},
   {id:'shadowbolt',name:'Shadow Bolt',element:'shadow',cost:8,dmg:16,cd:1.4,type:'damage',learnCost:140,desc:'Bolt of darkness.'},
   {id:'leech',name:'Leeching Touch',element:'shadow',cost:10,dmg:14,cd:2.0,type:'damage',learnCost:200,desc:'Heal 50% dmg.',leech:0.5},
   {id:'curse',name:'Withering Curse',element:'shadow',cost:16,dmg:8,cd:4.0,type:'damage',learnCost:540,desc:'DoT 6s.',dot:{dps:14,dur:6}},
   {id:'necrotic',name:'Necrotic Burst',element:'shadow',cost:28,dmg:75,cd:5,type:'damage',learnCost:2100,desc:'Hits + DoT.',dot:{dps:12,dur:4}},
-  {id:'souldrain',name:'Soul Drain',element:'shadow',cost:40,dmg:110,cd:10,type:'damage',learnCost:5500,desc:'Heavy leech.',leech:0.6},
+  {id:'souldrain',name:'Soul Drain',element:'shadow',cost:40,dmg:110,cd:10,type:'damage',learnCost:5500,desc:'Harvests up to 2s of each active damage-over-time effect immediately. Heals 60% of damage dealt.',leech:0.6,harvest:2},
   {id:'voidlance',name:'Void Lance',element:'shadow',cost:35,dmg:90,cd:9.0,type:'damage',learnCost:2400,desc:'Pierces all defense.',truedmg:true},
   {id:'penumbra',name:'Penumbra',element:'shadow',cost:32,dmg:90,cd:5,type:'damage',learnCost:5500,desc:'Scales off min(light,shadow) affinity. Balance is power.',balancedAffinity:true,critBonus:0.10},
   {id:'bloodbolt',name:'Blood Bolt',element:'blood',cost:7,dmg:18,cd:1.4,type:'damage',learnCost:280,desc:'Bolt of crimson.'},
@@ -1231,6 +1268,16 @@ const SPELLS=[
   {id:'singularity',name:'Singularity',element:'arcane',cost:150,dmg:720,cd:18,type:'damage',learnCost:800000,desc:'Ult: collapses space.',critBonus:0.20},
 ];
 SPELLS.forEach(s=>s.glyph=EL_INFO[s.element].glyph);
+
+// Shared rules and guide copy. Secondary hits never trigger more reactions.
+const REACTIONS=[
+  {id:'conduct',name:'Conduct',recipe:'Soaked + lightning',ratio:0.35,radius:3,limit:2,
+   desc:'Consumes Soaked on the main target. A bonus strike deals 35% of the triggering hit to it and up to 2 nearby foes.',loadout:['tidalwave','lightningbolt']},
+  {id:'wildfire',name:'Wildfire',recipe:'Burning + air',ratio:0.6,radius:3,limit:2,
+   desc:'Moves the main target\'s burns to up to 2 nearby foes at 60% strength, keeping their time remaining. Needs a nearby foe.',loadout:['spark','gust']},
+  {id:'shatter',name:'Shatter',recipe:'Chilled + earth',ratio:0.5,
+   desc:'Consumes Chilled on the main target for a bonus hit worth 50% of the triggering hit, ignoring defense.',loadout:['iceshard','stone']},
+];
 
 // ============================================================
 // ZONES
@@ -2854,7 +2901,7 @@ function makeEnemy(ref,x,y,isBoss){
     gold:Math.ceil(ref.gold*d.reward*rewardScale),
     xp:Math.ceil(ref.xp*d.reward*rewardScale),
   };
-  return {ref:sref,x,y,isBoss,hp:sref.hp,maxHp:sref.hp,atkCd:1/ref.spd,dotTimers:[],slowed:0};
+  return {ref:sref,x,y,isBoss,hp:sref.hp,maxHp:sref.hp,atkCd:1/ref.spd,dotTimers:[],statuses:{},slowed:0};
 }
 
 // ============================================================
@@ -3318,28 +3365,109 @@ function spellHealAmount(sp){
   return Math.floor(Math.max(sp.heal*(1+0.1*G.elements.water),G.hero.maxHp*(sp.id==='greaterheal'?0.20:0.08))
     *(1+effectTagSum('healMul'))*masteryBonus(sp.id));
 }
+function enemyDefense(e){return e.ref.def*((e.statuses?.fractured||0)>0?0.7:1);}
+function isBurn(dot){return dot.element==='fire'||SPELLS.find(s=>s.id===dot.spellId)?.element==='fire';}
+function enemyConditions(e){
+  const conditions=[];
+  const burns=(e.dotTimers||[]).filter(d=>d.remaining>0&&isBurn(d));
+  if(burns.length)conditions.push({id:'burning',name:'Burning',remaining:Math.max(...burns.map(d=>d.remaining)),description:'Taking fire damage over time. Air can spread it with Wildfire.'});
+  const defs={chilled:['Chilled','Attacks 40% slower. Earth consumes this to Shatter.'],soaked:['Soaked','Lightning consumes this to Conduct.'],fractured:['Fractured','Defense reduced by 30%. Recasts refresh; does not stack.']};
+  for(const [id,[name,description]] of Object.entries(defs))if((e.statuses?.[id]||0)>0)
+    conditions.push({id,name,remaining:e.statuses[id],description});
+  return conditions;
+}
+function clearSpellPath(a,b){
+  if(!Number.isInteger(a.x)||!Number.isInteger(a.y)||!Number.isInteger(b.x)||!Number.isInteger(b.y))return false;
+  let x=a.x,y=a.y;
+  const dx=Math.abs(b.x-x),dy=Math.abs(b.y-y),sx=x<b.x?1:-1,sy=y<b.y?1:-1;
+  let err=dx-dy;
+  while(x!==b.x||y!==b.y){
+    const twice=2*err,ox=x,oy=y;
+    if(twice>-dy){err-=dy;x+=sx;}
+    if(twice<dx){err+=dx;y+=sy;}
+    // A diagonal may not slip between touching walls.
+    if(!isWalkable(x,y)||(x!==ox&&y!==oy&&(!isWalkable(x,oy)||!isWalkable(ox,y))))return false;
+  }
+  return true;
+}
+function nearbyEnemies(origin,radius,limit,exclude=new Set()){
+  return G.mobs.filter(e=>e!==origin&&e.hp>0&&!e._rewarded&&!exclude.has(e)
+    &&Math.abs(e.x-origin.x)+Math.abs(e.y-origin.y)<=radius&&clearSpellPath(origin,e))
+    .sort((a,b)=>(Math.abs(a.x-origin.x)+Math.abs(a.y-origin.y))-(Math.abs(b.x-origin.x)+Math.abs(b.y-origin.y))||a.y-b.y||a.x-b.x)
+    .slice(0,limit);
+}
+function refreshEnemyDot(e,dot){
+  e.dotTimers=(e.dotTimers||[]).filter(d=>d.spellId!==dot.spellId);
+  if(e.hp>0&&dot.dps>0&&dot.remaining>0)e.dotTimers.push(dot);
+}
+function tickEnemyEffects(){
+  if(!G.hero.alive)return;
+  const enemies=[...new Set([...G.mobs,...(G.enemy?[G.enemy]:[])])];
+  for(const e of enemies){
+    if(e._rewarded||e.hp<=0)continue;
+    for(const dot of e.dotTimers||[]){
+      dealDamage(e,dot.dps*Math.min(TICK_S,Math.max(0,dot.remaining)));
+      dot.remaining=Math.max(0,dot.remaining-TICK_S);
+    }
+    e.dotTimers=(e.dotTimers||[]).filter(d=>d.remaining>0);
+    for(const id in e.statuses){e.statuses[id]=Math.max(0,e.statuses[id]-TICK_S);if(!e.statuses[id])delete e.statuses[id];}
+    e.slowed=Math.max(0,(e.slowed||0)-TICK_S);
+  }
+  settleDefeatedEnemies(enemies);
+}
+function triggerReactions(sp,target,hitDamage){
+  let dealt=0;
+  for(const reaction of REACTIONS){
+    if(reaction.id==='conduct'&&sp.lightning&&(target.statuses?.soaked||0)>0){
+      delete target.statuses.soaked;
+      const victims=[target,...nearbyEnemies(target,reaction.radius,reaction.limit)];
+      for(const e of victims)dealt+=dealDamage(e,Math.floor(hitDamage*reaction.ratio));
+      logLine(`> Conduct! Lightning surges through ${victims.length} foe${victims.length===1?'':'s'}.`,'cast');
+    }
+    if(reaction.id==='wildfire'&&sp.element==='air'){
+      const burns=(target.dotTimers||[]).filter(d=>d.remaining>0&&isBurn(d));
+      const victims=burns.length?nearbyEnemies(target,reaction.radius,reaction.limit):[];
+      if(victims.length){
+        target.dotTimers=target.dotTimers.filter(d=>!burns.includes(d));
+        for(const e of victims)for(const burn of burns){
+          const old=(e.dotTimers||[]).find(d=>d.spellId===burn.spellId);
+          // Transfer can refresh a burn but cannot weaken an existing stronger one.
+          refreshEnemyDot(e,{...burn,element:'fire',dps:Math.max(old?.dps||0,burn.dps*reaction.ratio),remaining:Math.max(old?.remaining||0,burn.remaining)});
+        }
+        logLine(`> Wildfire! Embers spread to ${victims.length} nearby foe${victims.length===1?'':'s'}.`,'cast');
+      }
+    }
+    if(reaction.id==='shatter'&&sp.element==='earth'&&(target.statuses?.chilled||0)>0){
+      delete target.statuses.chilled;
+      dealt+=dealDamage(target,Math.floor(hitDamage*reaction.ratio));
+      logLine('> Shatter! The frozen shell breaks.','cast');
+    }
+  }
+  return dealt;
+}
 function combatTick(){
   if(!G.enemy||!G.hero.alive)return;
   const e=G.enemy;
-  for(const dot of e.dotTimers){
-    dealDamage(e,dot.dps*Math.min(TICK_S,dot.remaining));
-    dot.remaining-=TICK_S;
-  }
-  e.dotTimers=e.dotTimers.filter(d=>d.remaining>0);
   if(e.hp<=0){onEnemyDead(e);return;}
   G.heroAtkCd-=TICK_S;
   let actions=0;
   while(G.heroAtkCd<=0&&actions++<8){
     G.heroAtkCd+=1/G.baseStats.spd;
     castOrSwing(e);
-    if(e.hp<=0){onEnemyDead(e);return;}
+    settleDefeatedEnemies([...G.mobs,e]);
+    if(G.enemy!==e||e.hp<=0)return;
   }
-  G.enemyAtkCd-=TICK_S;
-  if(e.slowed>0)e.slowed-=TICK_S;
+  const slowMul=e.slowed>0||(e.statuses?.chilled||0)>0?0.6:1;
+  G.enemyAtkCd-=TICK_S*slowMul;
   if(G.enemyAtkCd<=0){
-    const slowMul=e.slowed>0?0.6:1;
-    G.enemyAtkCd+=(1/e.ref.spd)/slowMul;
+    G.enemyAtkCd+=1/e.ref.spd;
     let dmg=Math.max(1,e.ref.atk-G.baseStats.def/2+ri(-1,1));
+    const guard=G.buffs.find(b=>b._spellId==='earthward'&&b._guardReady&&b.dur>0);
+    if(guard){
+      dmg*=1-SPELLS.find(s=>s.id==='earthward').guard;
+      guard._guardReady=false;
+      logLine('> Earthward absorbs 40% of the blow.','cast');
+    }
     G.hero.hp-=dmg;
     logLine(`${e.ref.name} hits you for ${Math.floor(dmg)}.`,'dmg');
     // Ailment proc: enemies attempt to inflict an ailment matching their element.
@@ -3373,7 +3501,7 @@ function castOrSwing(target){
     chosen=sp;break;
   }
   if(chosen){castSpell(chosen,target);return;}
-  let dmg=Math.max(1,s.atk-target.ref.def/2+ri(-1,1));
+  let dmg=Math.max(1,s.atk-enemyDefense(target)/2+ri(-1,1));
   let crit=Math.random()<s.crit;
   if(crit)dmg=Math.floor(dmg*s.cdmg);
   dmg=Math.floor(dmg*s.dmgMul);
@@ -3400,7 +3528,8 @@ function castSpell(sp,target){
   if(sp.type==='buff'){
     const masteredBuff={...sp.buff};
     if(masteredBuff.dur)masteredBuff.dur*=masteryMul; // mastery extends buff duration
-    G.buffs.push({...masteredBuff,_spellId:sp.id});
+    G.buffs=G.buffs.filter(b=>b._spellId!==sp.id);
+    G.buffs.push({...masteredBuff,_spellId:sp.id,...(sp.guard?{_guardReady:true}:{})});
     recomputeStats();
     logLine(`${EL_INFO[sp.element].glyph} ${sp.name} (${masteredBuff.dur.toFixed(1)}s).`,sp.element==='blood'?'blood':'cast');
     return;
@@ -3412,29 +3541,61 @@ function castSpell(sp,target){
   const matchup=elMul(sp.element,target.ref.el);
   const elGearBonus=elementBonusFromGear();
   const gearMul=1+(elGearBonus[sp.element]||0)+(elGearBonus._all||0);
-  let dmg=sp.dmg*elBoost*s.dmgMul*matchup*gearMul*masteryMul; // mastery: +5%/lv on this spell
-  dmg*=(1+0.05*G.hero.lvl);
+  let power=sp.dmg*elBoost*s.dmgMul*gearMul*masteryMul;
+  power*=(1+0.05*G.hero.lvl);
   // Eternal Ring: +X% damage per affinity level of the spell's element
   const elLvlDmg=effectTagSum('elementLevelDmg');
-  if(elLvlDmg>0)dmg*=(1+elLvlDmg*elLvl);
-  dmg*=rand(0.92,1.08);
+  if(elLvlDmg>0)power*=(1+elLvlDmg*elLvl);
+  power*=rand(0.92,1.08);
   let critChance=s.crit+(sp.critBonus||0);
   let crit=Math.random()<critChance;
-  if(crit)dmg*=s.cdmg;
-  if(!sp.truedmg)dmg=Math.max(1,dmg-target.ref.def/2);
+  if(crit)power*=s.cdmg;
   // Bloodfang: bloodUndeadFix nullifies the BLOOD_VS_UNDEAD penalty
   let bloodSuppressed=false;
   const undeadFix=effectTagSum('bloodUndeadFix')>0;
-  if(isBlood&&isUndead&&!undeadFix){dmg*=BLOOD_VS_UNDEAD_MUL;bloodSuppressed=true;}
-  dmg=Math.floor(dmg);
-  const actualDamage=dealDamage(target,dmg);
+  if(isBlood&&isUndead&&!undeadFix)bloodSuppressed=true;
+  const hitAmount=(victim,ratio=1)=>{
+    let amount=power*ratio*elMul(sp.element,victim.ref.el);
+    if(sp.execute&&victim.hp/(victim.maxHp||victim.ref.hp)<=sp.execute.threshold)amount*=sp.execute.mul;
+    if(!sp.truedmg)amount=Math.max(1,amount-enemyDefense(victim)/2);
+    if(isBlood&&victim.ref.tags?.includes('undead')&&!undeadFix)amount*=BLOOD_VS_UNDEAD_MUL;
+    return Math.floor(amount);
+  };
+  const dmg=hitAmount(target);
+  let actualDamage=dealDamage(target,dmg);
+  const victims=[target];
+  if(sp.splash)for(const e of nearbyEnemies(target,sp.splash.radius,sp.splash.limit)){
+    actualDamage+=dealDamage(e,hitAmount(e,sp.splash.ratio));victims.push(e);
+  }
+  if(sp.chain){
+    let origin=target;
+    const struck=new Set([target]);
+    for(const ratio of sp.chain){
+      const e=nearbyEnemies(origin,3,1,struck)[0];if(!e)break;
+      actualDamage+=dealDamage(e,hitAmount(e,ratio));victims.push(e);struck.add(e);origin=e;
+    }
+  }
+  if(sp.condition)for(const e of victims)if(e.hp>0){
+    e.statuses??={};e.statuses[sp.condition.id]=sp.condition.dur;
+  }
   if(sp.dot){
     const dotMul=elBoost*s.dmgMul*matchup*gearMul*masteryMul*(1+0.05*G.hero.lvl)
       *(1+elLvlDmg*elLvl)*(bloodSuppressed?BLOOD_VS_UNDEAD_MUL:1);
     // A recast refreshes this spell's DoT; different spells stack normally.
-    target.dotTimers=target.dotTimers.filter(d=>d.spellId!==sp.id);
-    target.dotTimers.push({spellId:sp.id,dps:sp.dot.dps*dotMul,remaining:sp.dot.dur});
+    refreshEnemyDot(target,{spellId:sp.id,element:sp.element,dps:sp.dot.dps*dotMul,remaining:sp.dot.dur});
   }
+  if(sp.burn)refreshEnemyDot(target,{spellId:sp.id,element:sp.element,dps:actualDamage*sp.burn.ratio/sp.burn.dur,remaining:sp.burn.dur});
+  if(sp.harvest&&target.hp>0){
+    let harvested=0;
+    for(const dot of target.dotTimers||[]){
+      const seconds=Math.min(sp.harvest,Math.max(0,dot.remaining));
+      harvested+=dealDamage(target,dot.dps*seconds);dot.remaining-=seconds;
+    }
+    target.dotTimers=(target.dotTimers||[]).filter(d=>d.remaining>0);
+    actualDamage+=harvested;
+    if(harvested>0)logLine(`> Harvest: ${fmt(harvested)} stored damage released.`,'cast');
+  }
+  actualDamage+=triggerReactions(sp,target,dmg);
   if(sp.buff){
     G.buffs=G.buffs.filter(b=>b._spellId!==sp.id);
     G.buffs.push({...sp.buff,dur:sp.buff.dur*masteryMul,_spellId:sp.id});
@@ -3463,7 +3624,7 @@ function castSpell(sp,target){
   if(matchup>1.01)mt=' !STRONG';
   else if(matchup<0.99)mt=' xweak';
   if(bloodSuppressed)mt+=' (undead resists)';
-  logLine(`${EL_INFO[sp.element].glyph} ${sp.name}: ${fmt(dmg)}${crit?' *CRIT':''}${mt} -> ${target.ref.name}.`,isBlood?'blood':'cast');
+  logLine(`${EL_INFO[sp.element].glyph} ${sp.name}: ${fmt(actualDamage)}${crit?' *CRIT':''}${mt} -> ${target.ref.name}${victims.length>1?` (+${victims.length-1} nearby)`:''}.`,isBlood?'blood':'cast');
 }
 
 // ============================================================
@@ -3498,28 +3659,40 @@ function rollGearDrop(e){
   }
 }
 function onEnemyDead(e){
+  // Explicit death entry point used by scripted encounters as well as combat.
+  e.hp=0;settleDefeatedEnemies([e]);
+}
+function settleDefeatedEnemies(candidates){
+  const dead=[...new Set(candidates)].filter(e=>e.hp<=0&&!e._rewarded);
+  if(!dead.length)return;
+  // Pay the whole cast before a boss/level transition can replace the map.
   const s=G.baseStats;
   const rm=s.rewardMul||1;
-  const gold=Math.ceil(e.ref.gold*s.goldFind*rm);
-  const xp=Math.ceil(e.ref.xp*s.xpMul*rm);
-  earnGold(gold);G.hero.xp+=xp;
-  G.rates.killTimes60.push(Date.now());
-  G.loot.push({x:e.x,y:e.y,ttl:8,name:e.ref.name,gold,xp});
-  logLine(`Slain: ${e.ref.name}. +${fmtG(gold)} +${fmt(xp)}xp`,'loot');
-  if(Math.random()<0.4){G.materials.dust+=1+ri(0,G.zoneIdx+1);}
-  if(Math.random()<0.4+0.05*G.zoneIdx){G.materials.herb=(G.materials.herb||0)+1+ri(0,G.zoneIdx);}
-  // NO spark from boss anymore -- only from awakening
-  rollGearDrop(e);
-  G.mobs=G.mobs.filter(m=>m!==e);
-  G.enemy=null;
-  if(e.isBoss){
+  for(const e of dead){
+    e._rewarded=true;
+    const gold=Math.ceil(e.ref.gold*s.goldFind*rm);
+    const xp=Math.ceil(e.ref.xp*s.xpMul*rm);
+    earnGold(gold);G.hero.xp+=xp;
+    G.rates.killTimes60.push(Date.now());
+    G.loot.push({x:e.x,y:e.y,ttl:8,name:e.ref.name,gold,xp});
+    logLine(`Slain: ${e.ref.name}. +${fmtG(gold)} +${fmt(xp)}xp`,'loot');
+    if(Math.random()<0.4){G.materials.dust+=1+ri(0,G.zoneIdx+1);}
+    if(Math.random()<0.4+0.05*G.zoneIdx){G.materials.herb=(G.materials.herb||0)+1+ri(0,G.zoneIdx);}
+    rollGearDrop(e);
+    if(!e.isBoss)G.kills++;
+  }
+  G.mobs=G.mobs.filter(m=>!dead.includes(m));
+  if(dead.includes(G.enemy))G.enemy=null;
+  if(dead.some(e=>e.isBoss)){
     if(G.trial.inTrial)onTrialBossKilled();
     else onBossKilled();
   } else {
-    G.kills++;
+    const map=G.map;
     checkLevelUp();
+    if(G.map!==map)return;
     if(!G.inDungeon&&!G.trial.inTrial){
-      if(G.kills>=ZONES[G.zoneIdx].killsToBoss&&!G.bossActive)spawnBoss();
+      // Finishing a side target must not replace the currently engaged foe.
+      if(G.kills>=ZONES[G.zoneIdx].killsToBoss&&!G.bossActive&&!G.enemy)spawnBoss();
       else if(G.mobs.length===0)spawnMobs();
     }
   }
@@ -3550,6 +3723,7 @@ function onHeroDead(){
   G.buffs=[];
   G.hero.ailments=[];
   G.spellCd={};
+  for(const e of G.mobs){e.dotTimers=[];e.statuses={};e.slowed=0;}
   if(hadStateMods)recomputeStats();
   if(G.bossActive){
     G.bossActive=false;
@@ -4153,16 +4327,77 @@ function buyAwakening(id){
 // ============================================================
 // IDLE
 // ============================================================
+function estimateIdleCombat(casts,actions,s,avg,d){
+  const enemyHp=avg.hp*d.enemyHp*ENEMY_HP_SCALE,baseDefense=avg.def*d.enemyDef/2;
+  const gems=elementBonusFromGear();
+  const records=casts.filter(({sp,rate})=>sp.type==='damage'&&rate>0).map(({sp,rate})=>{
+    const affinity=sp.balancedAffinity?Math.min(G.elements.light,G.elements.shadow):G.elements[sp.element];
+    const mul=(1+affinity*0.1)*s.dmgMul*(1+(gems[sp.element]||0)+(gems._all||0))*masteryBonus(sp.id)
+      *(1+0.05*G.hero.lvl)*(1+effectTagSum('elementLevelDmg')*affinity);
+    const raw=sp.dmg*mul*(1+Math.min(1,s.crit+(sp.critBonus||0))*(s.cdmg-1));
+    const hit=Math.min(enemyHp,Math.max(1,raw-(sp.truedmg?0:baseDefense)));
+    return {sp,rate,mul,raw,hit};
+  });
+  const staffHit=defense=>Math.min(enemyHp,Math.max(1,s.atk-defense)*s.dmgMul*(1+s.crit*(s.cdmg-1)));
+  // Conditions begin after a successful cast. Half the estimated encounter is
+  // a conservative average remaining lifetime, and lethal hits grant no uptime.
+  const directDps=records.reduce((total,r)=>total+r.hit*r.rate,0)+Math.max(0,actions)*staffHit(baseDefense);
+  const lifetime=enemyHp/Math.max(1,directDps);
+  const conditionUptime=id=>Math.min(1,records.reduce((total,r)=>
+    r.sp.condition?.id===id&&r.hit<enemyHp?total+r.rate*Math.min(r.sp.condition.dur,lifetime/2):total,0));
+  const chillUptime=conditionUptime('chilled'),fractureUptime=conditionUptime('fractured');
+  const defense=baseDefense*(1-0.30*fractureUptime);
+  let dps=Math.max(0,actions)*staffHit(defense),dotDps=0,healing=0;
+  for(const {sp,rate,mul,raw} of records){
+    let hit=Math.min(enemyHp,Math.max(1,raw-(sp.truedmg?0:defense)));
+    if(sp.execute&&hit<enemyHp*sp.execute.threshold){
+      // Only the finishing fraction of a sufficiently long fight benefits.
+      // An already lethal strike never gains an extra kill or damage credit.
+      const multiplier=1/(1-sp.execute.threshold+sp.execute.threshold/sp.execute.mul);
+      hit=Math.min(enemyHp,hit*multiplier);
+    }
+    let dot=0;
+    const remainingHp=Math.max(0,enemyHp-hit);
+    if(sp.dot){
+      const uptime=Math.min(1,rate*Math.min(sp.dot.dur,lifetime/2));
+      dot+=Math.min(sp.dot.dps*mul*uptime,remainingHp*rate);
+    }
+    if(sp.burn&&remainingHp>0){
+      const uptime=Math.min(1,rate*Math.min(sp.burn.dur,lifetime/2));
+      // Spark's burn is a fraction of damage that actually landed, spread over
+      // its duration. Refreshes replace the burn; overkill cannot seed a DoT.
+      dot+=Math.min(hit*sp.burn.ratio/sp.burn.dur*uptime,remainingHp*rate);
+    }
+    dot=Math.min(dot,remainingHp*rate);
+    dps+=hit*rate+dot;dotDps+=dot;
+    healing+=hit*rate*((sp.leech||0)+(sp.element==='blood'?BLOOD_LEECH_BASE:0)+effectTagSum('bonusLeech'));
+    // Splash, chains, reactions and harvested DoT damage require real targets
+    // and a cast sequence. They receive no fabricated extra damage here.
+  }
+  for(const {sp,rate} of casts)if(sp.type==='heal')healing+=rate*spellHealAmount(sp);
+  const incoming=Math.max(1,avg.atk*d.enemyAtk*ENEMY_ATK_SCALE-s.def/2)*avg.spd*(1-0.40*chillUptime);
+  return {enemyHp,dps,dotDps,healing,incoming,chillUptime,fractureUptime};
+}
 function applyIdle(seconds){
   if(!Number.isFinite(seconds)||seconds<=0)return null;
+  const elapsed=seconds;
   seconds=Math.min(seconds,IDLE_CAP_HOURS*3600);
+  // The reward estimate covers the absence. Age every existing enemy effect
+  // without replaying damage or kill rewards when the live encounter resumes.
+  // An engaged enemy normally also belongs to mobs, so visit each object once.
+  for(const enemy of new Set([...G.mobs,...(G.enemy?[G.enemy]:[])])){
+    enemy.dotTimers=(enemy.dotTimers||[]).map(dot=>({...dot,remaining:Math.max(0,dot.remaining-elapsed)})).filter(dot=>dot.remaining>0);
+    enemy.statuses=Object.fromEntries(Object.entries(enemy.statuses||{})
+      .map(([id,remaining])=>[id,Math.max(0,remaining-elapsed)]).filter(([,remaining])=>remaining>0));
+    enemy.slowed=Math.max(0,(enemy.slowed||0)-elapsed);
+  }
   // Build average effects without installing estimated casts into live state.
   // A potion that expires during an absence still helps for its remaining time.
   const oldBuffs=G.buffs.map(b=>({...b})),initialMana=G.hero.mana;
-  const remainingBuffs=oldBuffs.map(b=>({...b,dur:b.dur-seconds})).filter(b=>b.dur>0);
+  const remainingBuffs=oldBuffs.map(b=>({...b,dur:b.dur-elapsed})).filter(b=>b.dur>0);
   G.buffs=[];
-  G.hero.ailments=(G.hero.ailments||[]).map(a=>({...a,remaining:a.remaining-seconds})).filter(a=>a.remaining>0);
-  for(const id in G.spellCd)G.spellCd[id]=Math.max(0,G.spellCd[id]-seconds);
+  G.hero.ailments=(G.hero.ailments||[]).map(a=>({...a,remaining:a.remaining-elapsed})).filter(a=>a.remaining>0);
+  for(const id in G.spellCd)G.spellCd[id]=Math.max(0,G.spellCd[id]-elapsed);
   recomputeStats();
   const s={...G.baseStats},d=awakenDifficulty(),Z=ZONES[G.zoneIdx];
   G.buffs=remainingBuffs;recomputeStats();
@@ -4221,24 +4456,9 @@ function applyIdle(seconds){
     for(const k of ['gold','xp','hp','atk','def','spd'])a[k]+=(e[k]||0)/Z.enemies.length;
     return a;
   },{gold:0,xp:0,hp:0,atk:0,def:0,spd:0});
-  const enemyHp=avg.hp*d.enemyHp*ENEMY_HP_SCALE;
-  const defense=avg.def*d.enemyDef/2;
-  const gems=elementBonusFromGear();
-  let dps=0;
-  for(const {sp,rate} of casts){
-    if(sp.type==='heal'){healing+=rate*spellHealAmount(sp);continue;}
-    if(sp.type!=='damage')continue;
-    const affinity=sp.balancedAffinity?Math.min(G.elements.light,G.elements.shadow):G.elements[sp.element];
-    const mul=(1+affinity*0.1)*s.dmgMul*(1+(gems[sp.element]||0)+(gems._all||0))*masteryBonus(sp.id)
-      *(1+0.05*G.hero.lvl)*(1+effectTagSum('elementLevelDmg')*affinity);
-    const hit=Math.max(1,sp.dmg*mul*(1+Math.min(1,s.crit+(sp.critBonus||0))*(s.cdmg-1))-(sp.truedmg?0:defense));
-    const dot=sp.dot?sp.dot.dps*mul*Math.min(1,sp.dot.dur*rate):0;
-    dps+=hit*rate+dot;
-    healing+=hit*rate*((sp.leech||0)+(sp.element==='blood'?BLOOD_LEECH_BASE:0)+effectTagSum('bonusLeech'));
-  }
-  dps+=Math.max(0,actions)*Math.max(1,s.atk-defense)*s.dmgMul*(1+s.crit*(s.cdmg-1));
+  const combat=estimateIdleCombat(casts,actions,s,avg,d);
+  const {enemyHp,dps,incoming}=combat;healing+=combat.healing;
   const ttk=enemyHp/Math.max(1,dps);
-  const incoming=Math.max(1,avg.atk*d.enemyAtk*ENEMY_ATK_SCALE-s.def/2)*avg.spd;
   const survival=clamp(s.maxHp/Math.max(1,(incoming-healing)*ttk),0,1);
   const kills=G.autoExplore?seconds/(ttk+3)*0.65*survival:0;
   const reward=d.reward*ENEMY_REWARD_SCALE*(s.rewardMul||1);
@@ -4271,7 +4491,9 @@ function applyIdle(seconds){
   checkLevelUp({allowDungeon:false});
   if(gold+xp+passiveGold>0)logLine(`AFK ${fmtTime(seconds)}: +${fmtG(gold+passiveGold)}, +${fmt(xp)}xp + golem materials`,'loot');
   return {seconds,gold:gold+passiveGold,xp:xp+ritualXp,kills:Math.floor(kills),materials:matsGained,
-    ritualSeconds:channel,ritualMana,combatMana:combatManaSpent,regeneratedMana};
+    ritualSeconds:channel,ritualMana,combatMana:combatManaSpent,regeneratedMana,
+    combatEstimate:'single-target',estimatedDps:dps,estimatedIncomingDps:incoming,
+    estimateNote:'Combat rewards estimate one target at a time. Splash, chains, reactions and harvested damage are excluded.'};
 }
 function advanceIdleProjects(seconds){
   let researchTime=seconds;
@@ -4329,29 +4551,54 @@ function advanceIdleProjects(seconds){
 // "While you were away" modal -- shown after importing a save that's been idle
 // for > 60s. Surfaces offline gains visually rather than burying them in the
 // log scrollback, which is the genre's standard retention lever.
+let _offlineGainsDialog=null;
 function showOfflineGains(summary){
   if(!summary||summary.seconds<60)return;
-  const wrap=document.createElement('div');
-  wrap.className='modal-bg';
-  wrap.onclick=e=>{if(e.target===wrap)wrap.remove();};
-  const card=document.createElement('div');
-  card.className='modal';
-  const mats=Object.entries(summary.materials).filter(([_,v])=>v>0)
-    .map(([k,v])=>`<div class="gain"><span class="lbl">${k}</span><span class="v">+${fmt(Math.floor(v))}</span></div>`).join('');
-  card.innerHTML=`<h3>* While You Were Away</h3>
-    <div class="sub" style="margin-bottom:8px">Idle: ${fmtTime(summary.seconds)} (capped at ${IDLE_CAP_HOURS}h)</div>
+  // A throttled background tab may resume repeatedly before the player returns.
+  // Keep one dialog and accumulate its report; rewards have already been applied.
+  if(!_offlineGainsDialog){
+    const wrap=document.createElement('div');
+    wrap.className='modal-bg';
+    const card=document.createElement('section');
+    card.className='modal';
+    card.setAttribute('role','dialog');card.setAttribute('aria-modal','true');
+    card.setAttribute('aria-label','While you were away');
+    const heading=document.createElement('h3');heading.textContent='* While You Were Away';
+    const content=document.createElement('div');
+    const actions=document.createElement('div');actions.style.marginTop='10px';actions.style.textAlign='right';
+    const closeButton=document.createElement('button');
+    closeButton.className='act';closeButton.id='afk-close';closeButton.textContent='Continue';
+    const focusedBefore=document.activeElement;
+    const close=()=>{
+      wrap.remove();_offlineGainsDialog=null;
+      if(focusedBefore&&focusedBefore.isConnected)focusedBefore.focus();
+    };
+    closeButton.onclick=close;
+    wrap.onclick=event=>{if(event.target===wrap)close();};
+    wrap.addEventListener('keydown',event=>{
+      event.stopPropagation();
+      if(event.key==='Escape'){event.preventDefault();close();}
+      else if(event.key==='Tab'){event.preventDefault();closeButton.focus();}
+    });
+    actions.appendChild(closeButton);card.appendChild(heading);card.appendChild(content);card.appendChild(actions);
+    wrap.appendChild(card);document.body.appendChild(wrap);
+    _offlineGainsDialog={wrap,content,summary:{seconds:0,gold:0,xp:0,kills:0,materials:{}}};
+    closeButton.focus();
+  }
+  const pending=_offlineGainsDialog,totals=pending.summary;
+  for(const key of ['seconds','gold','xp','kills'])totals[key]+=summary[key]||0;
+  for(const [material,amount] of Object.entries(summary.materials||{}))totals.materials[material]=(totals.materials[material]||0)+amount;
+  if(summary.estimateNote)totals.estimateNote=summary.estimateNote;
+  const mats=Object.entries(totals.materials).filter(([_,v])=>v>0)
+    .map(([k,v])=>`<div class="gain"><span class="lbl">${asciiHTML(k)}</span><span class="v">+${fmt(Math.floor(v))}</span></div>`).join('');
+  pending.content.innerHTML=`<div class="sub" style="margin-bottom:8px">Idle: ${fmtTime(totals.seconds)} (each absence capped at ${IDLE_CAP_HOURS}h)</div>
     <div class="afk-summary">
-      <div class="gain"><span class="lbl">Gold</span><span class="v">+${fmtG(summary.gold)}</span></div>
-      <div class="gain"><span class="lbl">XP</span><span class="v">+${fmt(summary.xp)}</span></div>
-      <div class="gain"><span class="lbl">Est. kills</span><span class="v">${fmt(summary.kills)}</span></div>
+      <div class="gain"><span class="lbl">Gold</span><span class="v">+${fmtG(totals.gold)}</span></div>
+      <div class="gain"><span class="lbl">XP</span><span class="v">+${fmt(totals.xp)}</span></div>
+      <div class="gain"><span class="lbl">Est. kills</span><span class="v">${fmt(totals.kills)}</span></div>
       ${mats}
     </div>
-    <div style="margin-top:10px;text-align:right">
-      <button class="act" id="afk-close">Continue</button>
-    </div>`;
-  wrap.appendChild(card);
-  document.body.appendChild(wrap);
-  card.querySelector('#afk-close').onclick=()=>wrap.remove();
+    ${totals.estimateNote?`<p class="sub">${asciiHTML(totals.estimateNote)}</p>`:''}`;
 }
 
 // ============================================================
@@ -4383,7 +4630,7 @@ function b64ToUtf8(s){
 }
 function exportSave(){
   const d={
-    v:27,
+    v:28,
     gold:G.gold, spark:G.spark, materials:G.materials,
     hero:{lvl:G.hero.lvl,xp:G.hero.xp,hp:G.hero.hp,mana:G.hero.mana,alive:G.hero.alive,respawnIn:G.hero.respawnIn,ailments:G.hero.ailments||[]},
     zoneIdx:G.zoneIdx, unlocked:G.unlocked, kills:G.kills,
@@ -4470,7 +4717,7 @@ function buildImportedState(d,now=Date.now()){
   inspect(d);
   d=obj(d,'Save');
   if(!d.hero||typeof d.hero.lvl!=='number')throw Error('This is not a wizard save.');
-  const version=num(d.v,1,'save version',27,1,true),legacy=version<5;
+  const version=num(d.v,1,'save version',28,1,true),legacy=version<5;
   const hero=obj(d.hero,'Hero'),trial=obj(d.trial,'Trials'),alchemy=obj(d.alchemy,'Alchemy');
   const ui=obj(d.ui,'Interface'),ritual=obj(d.ritual,'Ritual');
   const unlocked=num(d.unlocked,0,'unlocked zone',ZONES.length-1,0,true);
@@ -4599,7 +4846,10 @@ function buildImportedState(d,now=Date.now()){
     const q=p?num(b._q,1,'potion buff quality',1,0.4):1;
     const maxDur=source.dur*(p?q:1+MASTERY_BONUS_PER_LV*(MASTERY_THRESHOLDS.length-1)),maxAmt=source.amt*(p?q:1);
     return {stat:source.stat,amt:num(b.amt,source.amt*q,'buff amount',maxAmt),dur:num(b.dur,maxDur,'buff duration',maxDur),
-      ...(p?{_potionId:p.id,_q:q,name:text(b.name,p.name)}:{_spellId:s.id})};
+      ...(p?{_potionId:p.id,_q:q,name:text(b.name,p.name)}:{_spellId:s.id}),
+      // A v27 ward had only a defense buff. Missing or older readiness must
+      // never turn into a fresh next-hit guard when a save is restored.
+      ...(!p&&s?.guard?{_guardReady:version>=28&&b._guardReady===true}:{})};
   }).filter(Boolean);
   const ailments=list(hero.ailments,'ailments',Object.keys(AILMENT_TYPES).length).map(raw=>{
     const a=obj(raw,'Ailment'),type=has(AILMENT_TYPES,a.id)?AILMENT_TYPES[a.id]:null;
@@ -4791,16 +5041,22 @@ function gearLabel(item){
 // ----- Map hover tooltips ---------------------------------------------------
 function mobTooltip(m){
   const r=m.ref;
+  const conditions=enemyConditions(m);
+  const chilled=conditions.some(c=>c.id==='chilled');
+  const fractured=conditions.some(c=>c.id==='fractured');
   const lvlLabel=G.trial.inTrial?`Floor ${G.trial.floor}`:`Level ${ZONES[G.zoneIdx].lvl}`;
   const lines=[
     r.name+(m.isBoss?' (Boss)':''),
     lvlLabel,
     `HP ${fmt(Math.ceil(m.hp))} / ${fmt(m.maxHp)}`,
-    `ATK ${r.atk} | DEF ${r.def} | SPD ${r.spd.toFixed(1)}`,
+    `ATK ${r.atk} | DEF ${fmt(r.def*(fractured?0.7:1))} | SPD ${(r.spd*(chilled?0.6:1)).toFixed(1)}`,
     `Element: ${EL_INFO[r.el].name}`,
     `Drops: ${fmt(r.gold)} g | ${fmt(r.xp)} xp`,
   ];
   if(r.tags&&r.tags.length)lines.push(`Tags: ${r.tags.join(', ')}`);
+  for(const condition of conditions){
+    lines.push(`${condition.name}: ${Math.max(0,condition.remaining).toFixed(1)}s`,condition.description);
+  }
   return lines.join('\n');
 }
 function chestTooltip(c){
@@ -4983,14 +5239,25 @@ function renderNextUp(){
 }
 function renderTargetIntel(){
   const e=G.enemy;
+  const earthward=G.buffs.find(b=>b._spellId==='earthward');
+  const guardHTML=earthward?`<div class="guard-readiness ${earthward._guardReady?'ready':''}">${earthward._guardReady?'[G] Earthward guard ready: next hit deals 40% less damage.':'[G] Earthward guard spent. The DEF bonus remains.'}</div>`:'';
   if(!e){
-    $('target-intel').innerHTML=`<div class="empty">no engagement -- auto-explore searching${G.autoExplore?'...':' (paused)'}</div>`;
+    $('target-intel').innerHTML=`<div class="empty">no engagement -- auto-explore searching${G.autoExplore?'...':' (paused)'}</div>${guardHTML}`;
     $('target-status').textContent=G.inDungeon?'dungeon':'idle';
     return;
   }
   $('target-status').textContent=e.isBoss?'BOSS':'in combat';
   const pct=Math.max(0,e.hp/e.maxHp*100);
   const ref=e.ref;
+  const conditions=enemyConditions(e);
+  const chilled=conditions.some(c=>c.id==='chilled');
+  const fractured=conditions.some(c=>c.id==='fractured');
+  const conditionMarkers={burning:'B',chilled:'C',soaked:'S',fractured:'F'};
+  const conditionHTML=conditions.length?`<div class="enemy-conditions" aria-label="Enemy conditions">${conditions.map(condition=>`
+    <div class="enemy-condition ${conditionMarkers[condition.id]?condition.id:''}">
+      <div class="condition-head"><span class="condition-name">[${conditionMarkers[condition.id]||'!'}] ${asciiHTML(condition.name)}</span><span class="condition-time">${Math.max(0,condition.remaining).toFixed(1)}s</span></div>
+      <div class="condition-description">${asciiHTML(condition.description)}</div>
+    </div>`).join('')}</div>`:'';
   // Affinity matchups -- show how every element our hero can cast resolves
   // against this target's element, so the player can pick the right spell.
   const muHtml=Object.keys(EL_INFO).map(el=>{
@@ -5010,10 +5277,12 @@ function renderTargetIntel(){
       <span class="lvl">${e.isBoss?'* DRAGON':'mob'}</span>
     </div>
     <div><span class="el-tag" style="color:var(--el-${ref.el})">${EL_INFO[ref.el].glyph} ${ref.el}</span>
-         <span class="sub">atk ${ref.atk} | spd ${ref.spd.toFixed(2)}</span></div>
+         <span class="sub">atk ${ref.atk} | def ${fmt(ref.def*(fractured?0.7:1))} | spd ${(ref.spd*(chilled?0.6:1)).toFixed(2)}</span></div>
     <div class="bar"><span style="width:${pct}%;background:var(--mob)"></span>
          <div class="txt">${Math.max(0,Math.ceil(e.hp))}/${e.maxHp} HP</div></div>
     ${muHtml?`<div class="matchups">${muHtml}</div>`:''}
+    ${conditionHTML}
+    ${guardHTML}
     <div class="drops">drops: +${fmtG(goldExp)} | +${fmt(xpExp)} xp${ref.tags?.length?' | '+ref.tags.join(', '):''}</div>
   `;
 }
@@ -5168,17 +5437,17 @@ function renderSpellSlots(){
     const mul=comboMul(c);
     return `<span style="color:var(--${c.color});font-weight:700;margin-left:6px" title="${c.desc}">${c.icon} ${c.name}${mul>1?' x2':''}</span>`;
   }).join('');
-  $('spell-cap').innerHTML=`${G.equippedSpells.filter(Boolean).length} / ${cap}${comboTags}`;
+  $('spell-cap').innerHTML=`${G.equippedSpells.slice(0,cap).filter(Boolean).length} / ${cap}${comboTags}`;
   let html='';
   for(let i=0;i<cap;i++){
     const id=G.equippedSpells[i];
     const sp=id?SPELLS.find(x=>x.id===id):null;
     html+=`<div class="slot">
       <span class="idx">${i+1}.</span>
-      <span class="nm ${id?'':'empty'}">${sp?`<span class="el ${sp.element}">${EL_INFO[sp.element].glyph}</span>${sp.name}`:'empty'}</span>
-      ${sp?`<button class="act" data-mv="up" data-i="${i}">^</button>
-            <button class="act" data-mv="dn" data-i="${i}">v</button>
-            <button class="act" data-uneq="${i}">x</button>`:''}
+      <span class="nm spell-slot-copy ${id?'':'empty'}">${sp?`<span><span class="el ${sp.element}">${EL_INFO[sp.element].glyph}</span>${asciiHTML(sp.name)}</span><span class="slot-description">${asciiHTML(sp.desc)}</span>`:'empty'}</span>
+      ${sp?`<span class="slot-actions"><button class="act" data-mv="up" data-i="${i}" aria-label="Move ${escAttr(asciiText(sp.name))} earlier in casting priority" title="Earlier priority" ${i===0?'disabled':''}>^</button>
+            <button class="act" data-mv="dn" data-i="${i}" aria-label="Move ${escAttr(asciiText(sp.name))} later in casting priority" title="Later priority" ${i===cap-1?'disabled':''}>v</button>
+            <button class="act" data-uneq="${i}" aria-label="Unequip ${escAttr(asciiText(sp.name))}" title="Unequip">x</button></span>`:''}
     </div>`;
   }
   $('spell-slots').innerHTML=html;
@@ -5200,7 +5469,7 @@ function renderKnownSpells(){
     const collapsed=G.uiCollapsed[key]!==false; // default collapsed
     const equippedCount=elSpells.filter(sp=>G.equippedSpells.includes(sp.id)).length;
     html+=`<div class="el-group">
-      <div class="el-group-header" data-toggle-spellbook="${e}">
+      <div class="el-group-header" data-toggle-spellbook="${e}" role="button" tabindex="0" aria-expanded="${!collapsed}" aria-label="${EL_INFO[e].name} spells">
         <span class="el ${e}">${EL_INFO[e].glyph} ${EL_INFO[e].name}</span>
         <span class="count">${elSpells.length} known${equippedCount?` | ${equippedCount} equipped`:''}</span>
         <span class="toggle">${collapsed?'+':'-'}</span>
@@ -5238,6 +5507,14 @@ function renderKnownSpells(){
       G.uiCollapsed[k]=G.uiCollapsed[k]===false?true:false;
       renderKnownSpells();
     };
+    h.onkeydown=event=>{
+      if(event.key!=='Enter'&&event.key!==' ')return;
+      event.preventDefault();
+      const element=h.dataset.toggleSpellbook;
+      h.click();
+      const replacement=$('known-spells').querySelector(`[data-toggle-spellbook="${element}"]`);
+      if(replacement)replacement.focus();
+    };
   });
   $('known-spells').querySelectorAll('button[data-eq]').forEach(b=>{
     b.onclick=(ev)=>{
@@ -5250,7 +5527,28 @@ function renderKnownSpells(){
     };
   });
 }
-function renderSpellbook(){renderSpellSlots();renderKnownSpells();}
+function renderReactionGuide(){
+  const guide=$('reaction-guide');if(!guide)return;
+  guide.innerHTML=REACTIONS.map(reaction=>{
+    const pair=reaction.loadout.map(id=>SPELLS.find(spell=>spell.id===id)).filter(Boolean);
+    const missing=pair.filter(spell=>!G.knownSpells.includes(spell.id));
+    const positions=pair.map(spell=>G.equippedSpells.slice(0,maxSpellSlots()).indexOf(spell.id));
+    const equipped=positions.every(position=>position>=0);
+    const inOrder=equipped&&positions.every((position,index)=>index===0||position>positions[index-1]);
+    let readiness;
+    if(missing.length)readiness='Learn '+missing.map(spell=>spell.name).join(' + ')+' in Elements.';
+    else if(inOrder)readiness='Equipped in the suggested priority.';
+    else if(equipped)readiness='Both equipped. Move the setup spell earlier in your priority.';
+    else readiness='Both learned. Equip this pair to try it.';
+    return `<article class="reaction-card">
+      <h3>[${asciiHTML(reaction.name.toUpperCase())}]</h3>
+      <div class="recipe">${asciiHTML(reaction.recipe)}</div>
+      <p>${asciiHTML(reaction.desc)}</p>
+      <div class="reaction-loadout">Try this pair: <span class="pair">${pair.map(spell=>asciiHTML(spell.name)).join(' -&gt; ')}</span><br><span class="${missing.length?'':'available'}">${asciiHTML(readiness)}</span></div>
+    </article>`;
+  }).join('');
+}
+function renderSpellbook(){renderSpellSlots();renderKnownSpells();renderReactionGuide();}
 function renderElements(){
   // Filter elements: hide arcane until first awakening
   const visibleEls=ELEMENTS.filter(e=>e!=='arcane'||isArcaneUnlocked());
@@ -6550,6 +6848,7 @@ function simulationTick(){
   // and any ailment-induced death is registered immediately.
   if(G.hero.alive)tickAilments();
   // Combat or movement
+  if(G.hero.alive)tickEnemyEffects();
   if(G.enemy)combatTick();
   else if(G.hero.alive)stepHero();
   // Loot/chest decay

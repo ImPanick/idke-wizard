@@ -1,7 +1,7 @@
 ```text
       /\
      /.*\        ASCII IDLE WIZARD
-    /_.._\       [ explore · study · become ]
+    /_.._\       [ explore | study | become ]
       ||
     __||__
 ```
@@ -21,8 +21,9 @@ Your progress lives in memory. **You decide when to export it and where to keep 
 1. Download [ascii-idle-wizard.html](ascii-idle-wizard.html) and open it in a browser.
 2. Your wizard explores and fights automatically. Use **WASD** or the **arrow keys**
    to move manually. Hover over enemies, chests, and equipment for details.
-3. Learn spells in **Wizard → Elements**, arrange their priority in **Spellbook**,
-   and equip your finds in **Equipment**. Spells cast in equipped order when ready.
+3. Learn spells in **Wizard -> Elements**, arrange their priority in **Spellbook**,
+   and equip your finds in **Equipment**. Each action chooses the first ready,
+   affordable spell; the slots are a priority list, not a fixed casting sequence.
 4. Defeat a zone's dragon to open the next path. New ranks unlock more of your
    sanctum; milestones appear in the live field notes.
 5. Before leaving, choose **Export save** and keep the code or download its text
@@ -72,6 +73,8 @@ the device's fonts; the game itself still requires a current browser.
 - **8 elements and 52 spells**: damage, healing, buffs, damage over time,
   lifesteal, true damage, and elemental synergies. Arcane unlocks after Awakening.
 - **6 passive elemental combinations**, including Eclipse, Steam, and Bloodmoon.
+- **3 combat reactions**: Conduct, Wildfire, and Shatter. Conditions, spell order,
+  and nearby enemies give individual spells different jobs.
 - **Spell mastery** grows with successful casts, up to level 10 at 20,000 casts.
   Each mastery level improves a spell's effect by 5%; mastery survives Awakening.
 - **5 equipment slots, 6 tiers, and 5 rarities**, with sockets, cumulative set
@@ -83,6 +86,42 @@ the device's fonts; the game itself still requires a current browser.
   Essence upgrades persist across Awakening.
 - **19 Awakening upgrades**, including permanent unlocks and options to retain
   equipment, spells, familiars, and research between journeys.
+
+## The living grimoire
+
+Eight spells now do more than scale their damage. Their descriptions appear
+directly in the equipped slots; the folded **Reaction field guide** suggests
+pairs and shows whether you have learned or equipped them.
+
+| Spell | What it does |
+|---|---|
+| Spark | Burns for 25% of the damage actually dealt, spread over 3 seconds. |
+| Ice Shard | Applies Chilled for 4 seconds, reducing enemy attack rate by 40%. |
+| Tidal Wave | Splashes 40% damage onto up to 2 nearby enemies and applies Soaked for 6 seconds to everyone hit. |
+| Chain Lightning | Jumps to 2 additional enemies, dealing 55% then 30% damage. |
+| Quake | Splashes 45% damage onto up to 3 nearby enemies; Fractured reduces their defense by 30% for 6 seconds. |
+| Earthward | Keeps its defense buff and reduces the next incoming hit by 40%. |
+| Holy Smite | Deals 50% more damage to targets at or below 30% health. |
+| Soul Drain | Harvests up to 2 seconds from each active damage-over-time effect for immediate damage, retaining its 60% lifesteal. |
+
+| Reaction | Setup, then trigger | Result |
+|---|---|---|
+| Conduct | Tidal Wave -> Lightning Bolt or Chain Lightning | Consumes Soaked for a 35% bonus strike on the main target and up to 2 nearby enemies. |
+| Wildfire | Spark -> Gust (or another Air damage spell) | Transfers the main target's burns to up to 2 neighbors at 60% strength, preserving remaining duration. Requires a nearby enemy. |
+| Shatter | Ice Shard -> Stoneblow (or another Earth damage spell) | Consumes Chilled for a bonus hit worth 50% of the triggering hit, ignoring defense. |
+
+Put the setup spell earlier in your priority list; cooldowns and mana determine
+when each spell actually fires. Burning, Chilled, Soaked, and Fractured appear
+with timers and explanations in the Encounter panel and enemy tooltips.
+Earthward's guard shows whether it is ready or already spent.
+
+Splash and reaction range is 3 map steps; Quake reaches 2. Each Chain Lightning
+jump can travel 3 steps from the previous target. Distance counts horizontal
+plus vertical steps, and walls or blocked corners stop secondary hits.
+Reapplying the same condition refreshes its duration rather than stacking it.
+Only the primary hit triggers reactions; splash, chains, and reaction hits do
+not start another reaction. Defeating a secondary target leaves the current
+engagement intact.
 
 ## Progression and time
 
@@ -106,7 +145,9 @@ estimates up to **12 hours** of idle progress. Estimated combat rewards account
 for your loadout and survivability and require Auto-Explore to be enabled.
 Passive income, golem production, rituals, paid research, and brewing can also
 advance. This estimate does not replay each encounter or award boss clears and
-gear drops. Long interruptions end an active dungeon or Trial run.
+gear drops. Its conservative combat model counts one target at a time and
+excludes splash, chains, reactions, and harvested damage. The return summary
+states this limitation. Long interruptions end an active dungeon or Trial run.
 
 ## Your save belongs to you
 
@@ -119,14 +160,15 @@ where you choose.
 current journey. Invalid saves are rejected without partially overwriting your
 character. Codes support Unicode, whitespace, line wrapping, and URL-safe base64.
 
-The current save format is **v27**: UTF-8 JSON encoded as base64. It includes
-active research, brewing progress, spell cooldowns, mastery, equipment, and UI
-preferences. Older saves migrate to the new XP curve while preserving the hero's
-level and fraction of progress toward the next level. Pre-v5 saves retain the
+The current save format is **v28**: UTF-8 JSON encoded as base64. It includes
+active research, brewing progress, spell cooldowns, mastery, equipment, UI
+preferences, and whether Earthward's guard is available or spent. Saves older
+than v27 migrate to the new XP curve while preserving the hero's level and
+fraction of progress toward the next level. Pre-v5 saves retain the
 legacy migration that resets incompatible equipment, gems, and legendaries.
 
 Maps and active encounters are regenerated when a save is imported. Previously
-exported codes remain usable, and **Settings → Start over** only resets the
+exported codes remain usable, and **Settings -> Start over** only resets the
 current in-memory journey.
 
 ## Footprint and development
@@ -152,8 +194,10 @@ node --test tests/*.test.cjs
 
 Tests cover progression, Trial rewards, generated-map connectivity, damage and
 healing, cooldowns, elapsed time, manual save round trips, older-save migration,
-invalid-save rejection, and idle project completion. These are mechanics tests;
-they do not claim browser layout or cross-browser coverage.
+invalid-save rejection, idle project completion, and spell/reaction mechanics.
+Focused UI checks cover reaction guidance, condition text, and accumulated
+background-reward dialogs. These tests do not claim browser layout or
+cross-browser coverage.
 
 ## Credits
 
