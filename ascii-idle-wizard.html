@@ -779,7 +779,7 @@ button.act,select.act{border-radius:0;min-height:36px;font-size:11px;padding:8px
 #bottom .btn-settings{font-size:10px;padding:6px 9px;min-height:30px}
 #bottom .author{font-size:10px}
 #bottom .footer-copy{font-size:10px;color:var(--dim)}
-.modal-bg{padding:20px;background:color-mix(in srgb,var(--bg) 80%,transparent);backdrop-filter:blur(4px);z-index:2000}
+.modal-bg{padding:20px;background:color-mix(in srgb,var(--bg) 80%,transparent);z-index:2000}
 .modal{padding:24px;max-width:600px;width:100%;max-height:90vh;border-color:var(--hi);box-shadow:0 24px 100px #0005}
 .modal h3{font-size:18px;font-weight:400;letter-spacing:.02em;margin-bottom:10px}
 .modal p{color:var(--dim);font-size:12px;line-height:1.75}
@@ -3182,12 +3182,15 @@ function onTrialBossKilled(){
   G.trial.floor++;
   if(G.trial.inTrial){
     const trial=G.trial,returnState=trial.trialReturn,nextFloor=trial.floor;
-    setTimeout(()=>{
-      // A resumed/imported run owns its own boss. An older transition must
-      // never erase that boss or interrupt the player's current combat.
-      if(G.trial===trial&&trial.inTrial&&trial.trialReturn===returnState
-        &&trial.floor===nextFloor&&!G.enemy&&G.mobs.length===0)spawnTrialBoss();
-    },600);
+    const advance=()=>{
+      // A resumed/imported run owns its own boss. Only defer a transition
+      // that still belongs to this run, and recheck it when the page returns.
+      if(G.trial!==trial||!trial.inTrial||trial.trialReturn!==returnState
+        ||trial.floor!==nextFloor||G.enemy||G.mobs.length!==0)return;
+      if(document.hidden||_pageHidden||_loopSuspended){_pendingTrialTransition=advance;return;}
+      spawnTrialBoss();
+    };
+    setTimeout(advance,600);
   }
 }
 function buyTrialUpgrade(id){
@@ -4138,6 +4141,7 @@ function awaken(){
   G.chests=[];G.buffs=[];G.spellCd={};
   recomputeStats();
   G.hero.hp=G.hero.maxHp;G.hero.mana=G.hero.maxMana;G.hero.alive=true;
+  clearOfflineGains();resetGameClock();
   genMap();
   logLine(`** AWAKENED (Tier ${tier}). +${newSpark} Spark. Total: ${G.spark}. Enemies harden, rewards bloom.`,'rank');
 }
@@ -4155,14 +4159,21 @@ function buyAwakening(id){
 // ============================================================
 function applyIdle(seconds){
   if(!Number.isFinite(seconds)||seconds<=0)return null;
+  const elapsed=seconds;
   seconds=Math.min(seconds,IDLE_CAP_HOURS*3600);
+  // Age existing effects by the full absence without replaying damage already
+  // represented by the reward estimate. The active target may also be in mobs.
+  for(const enemy of new Set([...G.mobs,...(G.enemy?[G.enemy]:[])])){
+    enemy.dotTimers=(enemy.dotTimers||[]).map(dot=>({...dot,remaining:Math.max(0,dot.remaining-elapsed)})).filter(dot=>dot.remaining>0);
+    enemy.slowed=Math.max(0,(enemy.slowed||0)-elapsed);
+  }
   // Build average effects without installing estimated casts into live state.
   // A potion that expires during an absence still helps for its remaining time.
   const oldBuffs=G.buffs.map(b=>({...b})),initialMana=G.hero.mana;
-  const remainingBuffs=oldBuffs.map(b=>({...b,dur:b.dur-seconds})).filter(b=>b.dur>0);
+  const remainingBuffs=oldBuffs.map(b=>({...b,dur:b.dur-elapsed})).filter(b=>b.dur>0);
   G.buffs=[];
-  G.hero.ailments=(G.hero.ailments||[]).map(a=>({...a,remaining:a.remaining-seconds})).filter(a=>a.remaining>0);
-  for(const id in G.spellCd)G.spellCd[id]=Math.max(0,G.spellCd[id]-seconds);
+  G.hero.ailments=(G.hero.ailments||[]).map(a=>({...a,remaining:a.remaining-elapsed})).filter(a=>a.remaining>0);
+  for(const id in G.spellCd)G.spellCd[id]=Math.max(0,G.spellCd[id]-elapsed);
   recomputeStats();
   const s={...G.baseStats},d=awakenDifficulty(),Z=ZONES[G.zoneIdx];
   G.buffs=remainingBuffs;recomputeStats();
@@ -4329,29 +4340,65 @@ function advanceIdleProjects(seconds){
 // "While you were away" modal -- shown after importing a save that's been idle
 // for > 60s. Surfaces offline gains visually rather than burying them in the
 // log scrollback, which is the genre's standard retention lever.
+let _offlineGainsDialog=null,_pendingOfflineGains=null,_offlineReportDirty=false;
+function clearOfflineGains(restoreFocus=false){
+  const prior=_offlineGainsDialog?.focusedBefore;
+  _offlineGainsDialog?.wrap.remove();
+  _offlineGainsDialog=null;_pendingOfflineGains=null;_offlineReportDirty=false;
+  if(restoreFocus&&prior?.isConnected)prior.focus();
+}
 function showOfflineGains(summary){
   if(!summary||summary.seconds<60)return;
-  const wrap=document.createElement('div');
-  wrap.className='modal-bg';
-  wrap.onclick=e=>{if(e.target===wrap)wrap.remove();};
-  const card=document.createElement('div');
-  card.className='modal';
-  const mats=Object.entries(summary.materials).filter(([_,v])=>v>0)
-    .map(([k,v])=>`<div class="gain"><span class="lbl">${k}</span><span class="v">+${fmt(Math.floor(v))}</span></div>`).join('');
-  card.innerHTML=`<h3>* While You Were Away</h3>
-    <div class="sub" style="margin-bottom:8px">Idle: ${fmtTime(summary.seconds)} (capped at ${IDLE_CAP_HOURS}h)</div>
+  if(!_pendingOfflineGains)_pendingOfflineGains={seconds:0,gold:0,xp:0,kills:0,materials:{}};
+  const totals=_pendingOfflineGains;
+  for(const key of ['seconds','gold','xp','kills'])totals[key]+=summary[key]||0;
+  for(const [material,amount] of Object.entries(summary.materials||{}))
+    totals.materials[material]=(totals.materials[material]||0)+amount;
+  if(summary.estimateNote)totals.estimateNote=summary.estimateNote;
+  _offlineReportDirty=true;
+  renderOfflineGains();
+}
+function renderOfflineGains(){
+  // Keep only summary data while hidden or while the player is managing a save.
+  if(!_pendingOfflineGains||!_offlineReportDirty||document.hidden||_pageHidden||_loopSuspended||_saveDialogClose)return;
+  if(!_offlineGainsDialog){
+    const wrap=document.createElement('div');
+    wrap.className='modal-bg';
+    const card=document.createElement('section');
+    card.className='modal';
+    card.setAttribute('role','dialog');card.setAttribute('aria-modal','true');
+    card.setAttribute('aria-label','While you were away');
+    const heading=document.createElement('h3');heading.textContent='* While You Were Away';
+    const content=document.createElement('div');
+    const actions=document.createElement('div');actions.style.marginTop='10px';actions.style.textAlign='right';
+    const closeButton=document.createElement('button');
+    closeButton.className='act';closeButton.id='afk-close';closeButton.textContent='Continue';
+    const focusedBefore=document.activeElement;
+    const close=()=>clearOfflineGains(true);
+    closeButton.onclick=close;
+    wrap.onclick=event=>{if(event.target===wrap)close();};
+    wrap.addEventListener('keydown',event=>{
+      event.stopPropagation();
+      if(event.key==='Escape'){event.preventDefault();close();}
+      else if(event.key==='Tab'){event.preventDefault();closeButton.focus();}
+    });
+    actions.appendChild(closeButton);card.appendChild(heading);card.appendChild(content);card.appendChild(actions);
+    wrap.appendChild(card);document.body.appendChild(wrap);
+    _offlineGainsDialog={wrap,content,focusedBefore};
+    closeButton.focus();
+  }
+  const pending=_offlineGainsDialog,totals=_pendingOfflineGains;
+  _offlineReportDirty=false;
+  const mats=Object.entries(totals.materials).filter(([_,v])=>v>0)
+    .map(([k,v])=>`<div class="gain"><span class="lbl">${asciiHTML(k)}</span><span class="v">+${fmt(Math.floor(v))}</span></div>`).join('');
+  pending.content.innerHTML=`<div class="sub" style="margin-bottom:8px">Idle: ${fmtTime(totals.seconds)} (each absence capped at ${IDLE_CAP_HOURS}h)</div>
     <div class="afk-summary">
-      <div class="gain"><span class="lbl">Gold</span><span class="v">+${fmtG(summary.gold)}</span></div>
-      <div class="gain"><span class="lbl">XP</span><span class="v">+${fmt(summary.xp)}</span></div>
-      <div class="gain"><span class="lbl">Est. kills</span><span class="v">${fmt(summary.kills)}</span></div>
+      <div class="gain"><span class="lbl">Gold</span><span class="v">+${fmtG(totals.gold)}</span></div>
+      <div class="gain"><span class="lbl">XP</span><span class="v">+${fmt(totals.xp)}</span></div>
+      <div class="gain"><span class="lbl">Est. kills</span><span class="v">${fmt(totals.kills)}</span></div>
       ${mats}
     </div>
-    <div style="margin-top:10px;text-align:right">
-      <button class="act" id="afk-close">Continue</button>
-    </div>`;
-  wrap.appendChild(card);
-  document.body.appendChild(wrap);
-  card.querySelector('#afk-close').onclick=()=>wrap.remove();
+    ${totals.estimateNote?`<p class="sub">${asciiHTML(totals.estimateNote)}</p>`:''}`;
 }
 
 // ============================================================
@@ -4685,6 +4732,7 @@ function importSave(str){
     if(save.legacy)logLine(`Pre-v5 save (v${save.version}): old wardrobe, gems and legendaries reset; other progress preserved.`,'sys');
     if(save.version<27)logLine('Progress migrated to the new level curve; your level and next-level progress are preserved.','sys');
     logLine('Save imported.','sys');
+    clearOfflineGains();
     if(summary&&summary.seconds>=60)showOfflineGains(summary);
     return true;
   }catch(e){
@@ -6565,26 +6613,81 @@ function simulationTick(){
   if(_renderPause>0)_renderPause--;
 }
 let _lastTickAt=Date.now(),_tickAccumulator=0;
-function resetGameClock(){_lastTickAt=Date.now();_tickAccumulator=0;}
+let _gameTimer=null,_timerGeneration=0,_loopSuspended=false,_pageHidden=false,_lifecycleBound=false,_renderOnResume=false,_bgArtNeedsRender=false,_pendingTrialTransition=null;
+const MAX_CATCHUP_STEPS=20; // At most five seconds of simulation in one callback.
+function resetGameClock(){_lastTickAt=Date.now();_tickAccumulator=0;_pendingTrialTransition=null;}
+function stopGameLoop(){
+  if(_gameTimer!==null)clearInterval(_gameTimer);
+  _gameTimer=null;
+  _timerGeneration++; // Invalidate callbacks already queued by an older interval.
+}
+function startGameLoop(){
+  if(_gameTimer!==null||document.hidden||_pageHidden||_loopSuspended)return;
+  const generation=++_timerGeneration;
+  _gameTimer=setInterval(()=>{if(generation===_timerGeneration)gameTick();},TICK_MS);
+}
+function suspendGameLoop(){
+  _loopSuspended=true;
+  stopGameLoop();
+  // Preserve the last processed time, including any fractional/backlogged tick.
+}
+function resumeGameLoop(){
+  if(document.hidden||_pageHidden)return;
+  if(!_loopSuspended){startGameLoop();return;}
+  _loopSuspended=false;_renderOnResume=true;
+  try{if(_bgArtNeedsRender)renderBgArt();gameTick();renderOfflineGains();}finally{startGameLoop();}
+}
+function initGameLifecycle(){
+  if(_lifecycleBound)return;
+  _lifecycleBound=true;
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden)suspendGameLoop();else resumeGameLoop();
+  });
+  window.addEventListener('pagehide',()=>{_pageHidden=true;suspendGameLoop();});
+  window.addEventListener('pageshow',()=>{
+    _pageHidden=false;
+    if(document.hidden)suspendGameLoop();else resumeGameLoop();
+  });
+  if(document.hidden)suspendGameLoop();else startGameLoop();
+}
 function gameTick(){
+  // Hidden tabs never simulate, render, create dialogs, or consume elapsed time.
+  if(document.hidden||_pageHidden||_loopSuspended){suspendGameLoop();return;}
   const now=Date.now();
-  const elapsed=Math.max(0,(now-_lastTickAt)/1000);_lastTickAt=now;
-  if(elapsed>60){
+  const elapsed=Math.max(0,(now-_lastTickAt)/1000);
+  _lastTickAt=now;
+  _tickAccumulator+=elapsed;
+  let changed=false;
+  if(_tickAccumulator>60){
+    // Claim this interval before doing work, so repeated resume events cannot
+    // apply it twice. The idle estimator caps rewards at twelve hours.
+    const pending=_tickAccumulator;_tickAccumulator=0;
     if(G.inDungeon)exitDungeon('closed during your absence');
     if(G.trial.inTrial)exitTrial('paused during your absence');
-    const summary=applyIdle(elapsed);
+    const summary=applyIdle(pending);
     if(!G.hero.alive)respawn();
     G.rates={goldDelta60:[],xpDelta60:[],killTimes60:[],dmgDealt60:[],
       _lastSnapGold:G.gold,_lastSnapXp:totalLifetimeXp(),_lastSnapT:now,_windowStart:now};
-    _tickAccumulator=0;
     showOfflineGains(summary);
+    changed=true;
   }else{
-    _tickAccumulator+=elapsed;
     let steps=0;
-    while(_tickAccumulator>=TICK_S&&steps++<240){simulationTick();_tickAccumulator-=TICK_S;}
+    while(_tickAccumulator>=TICK_S&&steps<MAX_CATCHUP_STEPS){
+      simulationTick();_tickAccumulator-=TICK_S;steps++;
+    }
+    // A short stall retains ordinary combat semantics without a 240-step burst.
+    changed=steps>0;
   }
-  renderHot();
-  if(_renderPause===0&&G.tick%2===0)renderCold();
+  if(_pendingTrialTransition){
+    const advance=_pendingTrialTransition;_pendingTrialTransition=null;
+    advance();
+  }
+  if(changed||_renderOnResume){
+    renderHot();
+    if(_renderPause===0&&(_renderOnResume||G.tick%2===0||elapsed>60))renderCold();
+  }
+  _renderOnResume=false;
+  renderOfflineGains();
 }
 
 // Cold-render pause guard. When the user mousedowns/touches on any interactive
@@ -6716,6 +6819,8 @@ function bindEvents(){
 // glyph; the rest stay whitespace so the pattern reads as airy starscape.
 const BG_SIGILS=['*','+','~','#','@','%','o','^',':','='];
 function renderBgArt(){
+  if(document.hidden||_pageHidden||_loopSuspended){_bgArtNeedsRender=true;return;}
+  _bgArtNeedsRender=false;
   const el=$('bg-art');if(!el)return;
   // Tuned to the CSS font-size (22px) + letter-spacing (6px) -- overshoot both
   // dimensions so the field fills wide ultrawides and tall portraits alike.
@@ -6733,6 +6838,7 @@ function renderBgArt(){
 let _bgArtResizeT=null;
 window.addEventListener('resize',()=>{
   clearTimeout(_bgArtResizeT);
+  if(document.hidden||_pageHidden||_loopSuspended){_bgArtNeedsRender=true;return;}
   _bgArtResizeT=setTimeout(renderBgArt,200);
 });
 // Inline this section in the single game document before init().
@@ -6919,6 +7025,7 @@ function openSaveDialog(mode){
     document.body.style.overflow=oldOverflow;
     _saveDialogClose=null;
     if(previouslyFocused&&previouslyFocused.isConnected)previouslyFocused.focus();
+    renderOfflineGains();
   }
   _saveDialogClose=close;
   dialog.querySelector('.save-close').onclick=close;
@@ -7020,8 +7127,8 @@ function init(){
   initInterfaceEnhancements();
   renderBgArt();
   logLine('You step into the Verdant Meadow. Cast a spell, slay something.','sys');
-  renderAll();
-  setInterval(gameTick,TICK_MS);
+  if(!document.hidden)renderAll();
+  initGameLifecycle();
 }
 init();
 </script>

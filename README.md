@@ -98,8 +98,14 @@ The preview shows the Spark you will earn from your level and deepest unlocked
 region. Each Awakening increases both difficulty and rewards.
 
 The simulation uses elapsed time with 250 ms steps. Short timer delays are
-processed when the browser runs the game again. Spell cooldowns recover during
-travel and while automatic exploration is disabled.
+processed in bounded batches when the browser runs the game again. Spell
+cooldowns recover during travel and while automatic exploration is disabled.
+
+Hidden tabs suspend their simulation and rendering. Returning to the page
+accounts for the absence once, then restarts one timer. Long absences produce
+one recap; if you leave again before dismissing it, that same recap accumulates
+the new gains. Each absence retains the 12-hour reward cap. Temporary effects
+age by the full absence, including time beyond the reward cap.
 
 For gaps longer than a minute, or when importing an older snapshot, the game
 estimates up to **12 hours** of idle progress. Estimated combat rewards account
@@ -152,8 +158,11 @@ node --test tests/*.test.cjs
 
 Tests cover progression, Trial rewards, generated-map connectivity, damage and
 healing, cooldowns, elapsed time, manual save round trips, older-save migration,
-invalid-save rejection, and idle project completion. These are mechanics tests;
-they do not claim browser layout or cross-browser coverage.
+invalid-save rejection, idle project completion, and background lifecycle behavior.
+The deterministic lifecycle suite simulates nine-hour absences, repeated hidden
+wakeups, page restoration, recap accumulation, save replacement, short stalls,
+and deferred Trial transitions. These tests do not claim browser layout,
+cross-browser coverage, or a real overnight device soak.
 
 ## Credits
 
