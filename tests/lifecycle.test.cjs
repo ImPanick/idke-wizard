@@ -249,7 +249,9 @@ test('Awakening clears an old recap and discards pre-reset time debt', () => {
   assert.equal(g.run('G.tick'), 0); assert.equal(g.run('_tickAccumulator'), 0);
 });
 test('recap overlay does not allocate a full-screen backdrop blur', () => {
-  assert.doesNotMatch(html.match(/\.modal-bg\s*\{[^}]*\}/)[0], /backdrop-filter/);
+  const rules = [...html.matchAll(/\.modal-bg\s*\{[^}]*\}/g)].map(match => match[0]);
+  assert.ok(rules.length > 0);
+  for (const rule of rules) assert.doesNotMatch(rule, /backdrop-filter/);
 });
 
 function pendingTrial(g) {
