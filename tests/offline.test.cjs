@@ -136,3 +136,139 @@ test('ordinary brew completions can reach perfect quality and then continue thro
   assert.equal(run('G.alchemy.lvl'), 100);
   assert.equal(run('G.alchemy.brewSlots.length'), 5);
 });
+
+function prepareCombatEstimate(run) {
+  run(`const estimateStats={...G.baseStats,crit:0,atk:10,dmgMul:1};
+    const estimateEnemy={hp:100,atk:30,def:0,spd:1,gold:0,xp:0};
+    const estimateDifficulty={enemyHp:1,enemyAtk:1,enemyDef:1};
+    const estimateSpell={id:'spark',element:'fire',type:'damage',dmg:10};
+    const estimate=(spell,rate=0.5)=>estimateIdleCombat([{sp:spell,rate}],0,estimateStats,estimateEnemy,estimateDifficulty);`);
+}
+
+test('offline overkill seeds no burn and yields no extra execution credit or leech', () => {
+  const { run } = game();
+  prepareCombatEstimate(run);
+  run(`const lethal={...estimateSpell,dmg:1e9,leech:0.6};
+    const baseline=estimate(lethal);
+    const enhanced=estimate({...lethal,burn:{ratio:0.25,dur:3},execute:{threshold:0.3,mul:1.5}});`);
+  assert.equal(run('enhanced.dps'), run('baseline.dps'));
+  assert.equal(run('enhanced.dotDps'), 0);
+  assert.equal(run('enhanced.healing'), run('enhanced.enemyHp*0.5*0.6'));
+});
+
+test('offline burn refreshes share one damage-over-time slot', () => {
+  const { run } = game();
+  prepareCombatEstimate(run);
+  run(`const burning=estimate({...estimateSpell,burn:{ratio:0.25,dur:3}});
+    const direct=estimate(estimateSpell);`);
+  assert.ok(run('burning.dotDps') > 0);
+  // Two-second casts refresh a three-second burn; they cannot stack full burns.
+  assert.ok(run('burning.dotDps<=10*1.05*0.25/3+1e-9'));
+  assert.equal(run('burning.dps-burning.dotDps'), run('direct.dps'));
+});
+
+test('offline execution helps only the finishing fraction of a surviving target', () => {
+  const { run } = game();
+  prepareCombatEstimate(run);
+  run(`const direct=estimate(estimateSpell);
+    const executed=estimate({...estimateSpell,execute:{threshold:0.3,mul:1.5}});`);
+  assert.ok(run('executed.dps') > run('direct.dps'));
+  assert.ok(run('executed.dps') < run('direct.dps*1.2'));
+});
+
+test('offline chill and fracture use feasible uptime and cannot affect an already dead target', () => {
+  const { run } = game();
+  prepareCombatEstimate(run);
+  run(`const chilled=estimate({...estimateSpell,condition:{id:'chilled',dur:4}});
+    const lethalChill=estimate({...estimateSpell,dmg:1e9,condition:{id:'chilled',dur:4}});
+    estimateEnemy.def=20;
+    const direct=estimate(estimateSpell);
+    const fractured=estimate({...estimateSpell,condition:{id:'fractured',dur:6}});`);
+  assert.ok(run('chilled.incoming') < run('lethalChill.incoming'));
+  assert.equal(run('lethalChill.chillUptime'), 0);
+  assert.ok(run('fractured.fractureUptime') > 0);
+  assert.ok(run('fractured.fractureUptime') <= 1);
+  assert.ok(run('fractured.dps') > run('direct.dps'));
+});
+
+test('offline estimates never fabricate nearby targets, reactions or extra harvested damage', () => {
+  const { run } = game();
+  prepareCombatEstimate(run);
+  run(`const direct=estimate(estimateSpell);
+    const crowded=estimate({...estimateSpell,splash:{ratio:0.45,limit:3,radius:3},
+      chain:[0.55,0.30],lightning:true,harvest:2,condition:{id:'soaked',dur:6}});`);
+  assert.equal(run('crowded.dps'), run('direct.dps'));
+  assert.equal(run('crowded.healing'), run('direct.healing'));
+  run('const summary=applyIdle(120);');
+  assert.equal(run('summary.combatEstimate'), 'single-target');
+  assert.match(run('summary.estimateNote'), /reactions.*excluded/);
+});
+
+test('v28 saves preserve both available and spent Earthward guard readiness', () => {
+  for (const ready of [true, false]) {
+    const { run } = game();
+    run(`const earthward=SPELLS.find(sp=>sp.id==='earthward');
+      G.buffs=[{...earthward.buff,_spellId:earthward.id,_guardReady:${ready}}];
+      const code=exportSave();const savedVersion=JSON.parse(b64ToUtf8(code)).v;
+      const restored=importSave(code);`);
+    assert.equal(run('savedVersion'), 28);
+    assert.equal(run('restored'), true, run('lastSaveError'));
+    assert.equal(run('G.buffs[0]._guardReady'), ready);
+  }
+});
+
+test('older or incomplete ward saves never receive a fresh guard or a second XP migration', () => {
+  const { run } = game();
+  run(`const earthward=SPELLS.find(sp=>sp.id==='earthward');
+    const code=JSON.parse(b64ToUtf8(exportSave()));code.hero.lvl=50;code.hero.xp=1234;
+    code.buffs=[{...earthward.buff,_spellId:earthward.id,_guardReady:true}];
+    code.v=27;const previous=buildImportedState(code).state;
+    code.v=28;delete code.buffs[0]._guardReady;const missing=buildImportedState(code).state;`);
+  assert.equal(run('previous.buffs[0]._guardReady'), false);
+  assert.equal(run('missing.buffs[0]._guardReady'), false);
+  assert.equal(run('previous.hero.xp'), 1234);
+  assert.equal(run('missing.hero.xp'), 1234);
+});
+
+test('a long absence expires all enemy effects and Earthward without replaying damage', () => {
+  const { run } = game();
+  run(`G.autoExplore=false;
+    const primary=makeEnemy(ZONES[0].enemies[0],3,3,false);
+    const side=makeEnemy(ZONES[0].enemies[1],4,3,false);
+    G.mobs=[primary,side];G.enemy=primary;
+    for(const enemy of G.mobs){
+      enemy.dotTimers=[{spellId:'spark',element:'fire',dps:100,remaining:3}];
+      enemy.statuses={chilled:4,soaked:6,fractured:6};enemy.slowed=2;
+    }
+    const earthward=SPELLS.find(sp=>sp.id==='earthward');
+    G.buffs=[{...earthward.buff,_spellId:'earthward',_guardReady:true}];
+    const health=G.mobs.map(enemy=>enemy.hp);
+    const gold=G.gold,xp=G.hero.xp;applyIdle(120);tickEnemyEffects();`);
+  assert.equal(run('G.mobs.every((enemy,i)=>enemy.hp===health[i])'), true);
+  assert.equal(run('G.mobs.every(enemy=>enemy.dotTimers.length===0&&Object.keys(enemy.statuses).length===0&&enemy.slowed===0)'), true);
+  assert.equal(run('G.buffs.length'), 0);
+  assert.equal(run('G.rates.dmgDealt60.length'), 0);
+  assert.equal(run('G.gold'), run('gold'));
+  assert.equal(run('G.hero.xp'), run('xp'));
+  assert.equal(run('G.enemy===primary'), true);
+});
+
+test('short idle periods age the shared active enemy once and retain only unexpired effects', () => {
+  const { run } = game();
+  run(`G.autoExplore=false;
+    const enemy=makeEnemy(ZONES[0].enemies[0],3,3,false);G.mobs=[enemy];G.enemy=enemy;
+    enemy.dotTimers=[{spellId:'spark',element:'fire',dps:2,remaining:5}];
+    enemy.statuses={chilled:4,soaked:1};enemy.slowed=3;
+    const earthward=SPELLS.find(sp=>sp.id==='earthward');
+    G.buffs=[{...earthward.buff,_spellId:'earthward',_guardReady:false}];
+    const health=enemy.hp;applyIdle(2);`);
+  assert.equal(run('enemy.dotTimers[0].remaining'), 3);
+  assert.equal(run('enemy.statuses.chilled'), 2);
+  assert.equal(run('enemy.statuses.soaked'), undefined);
+  assert.equal(run('enemy.slowed'), 1);
+  assert.equal(run('enemy.hp'), run('health'));
+  assert.equal(run('G.buffs[0]._guardReady'), false);
+  assert.equal(run('G.buffs[0].dur'), 8);
+  run('tickEnemyEffects();');
+  assert.equal(run('health-enemy.hp'), 0.5);
+});
